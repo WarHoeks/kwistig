@@ -13,6 +13,7 @@ import {
 } from "@kwistig/shared";
 import { Field, LocalizedInput, OptionalNumber, OptionalText, setOpt } from "./fields";
 import { IssueList } from "./IssueList";
+import { ImageField, MediaEditor, uploadImage } from "./MediaEditor";
 
 type Props = {
   item: Item;
@@ -22,7 +23,79 @@ type Props = {
 };
 
 /** Answer types the form editor supports; the rest are edited as JSON for now. */
-const FORM_TYPES: AnswerType[] = ["multiple_choice", "true_false", "open", "number", "buzzer"];
+const FORM_TYPES: AnswerType[] = ["multiple_choice", "true_false", "open", "number", "buzzer", "rapid_sequence"];
+
+type Rapid = Extract<Question, { answerType: "rapid_sequence" }>;
+
+/** Flitsreeks: button label, timing, scoring and 5–20 images marked yes/no. */
+function RapidFields({ q, quizLang, edit }: { q: Rapid; quizLang: Language; edit: (fn: (d: Question) => void) => void }) {
+  const { t } = useTranslation();
+  const multi = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const editR = (fn: (d: Rapid) => void) => edit((d) => d.answerType === "rapid_sequence" && fn(d));
+  const scoring = q.scoring ?? {};
+
+  const addFiles = async (files: FileList) => {
+    setBusy(true);
+    try {
+      const srcs: string[] = [];
+      for (const f of Array.from(files).slice(0, 20 - q.images.length)) srcs.push(await uploadImage(f));
+      editR((d) => d.images.push(...srcs.map((src) => ({ src, yes: false }))));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <LocalizedInput label={t("editor.buttonLabel")} value={q.buttonLabel} quizLang={quizLang} onChange={(v) => editR((d) => (d.buttonLabel = v ?? ""))} />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <OptionalNumber label={t("editor.secondsPerImage")} value={q.secondsPerImage} min={1} step="any" placeholder="5" onChange={(v) => editR((d) => setOpt(d, "secondsPerImage", v))} />
+        <OptionalNumber label={t("editor.pointsPerImage")} value={scoring.pointsPerImage} min={0} step="any" placeholder="1" onChange={(v) => editR((d) => setOpt((d.scoring ??= {}), "pointsPerImage", v))} />
+        <OptionalNumber label={t("editor.wrongPressPenalty")} value={scoring.wrongPressPenalty} min={0} step="any" placeholder="0" onChange={(v) => editR((d) => setOpt((d.scoring ??= {}), "wrongPressPenalty", v))} />
+      </div>
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" className="accent-amber-400" checked={scoring.speedBonus ?? false} onChange={(e) => editR((d) => setOpt((d.scoring ??= {}), "speedBonus", e.target.checked || undefined))} />
+        {t("editor.speedBonus")}
+      </label>
+
+      <fieldset className="space-y-2">
+        <legend className="label">{t("editor.sequenceImages", { count: q.images.length })}</legend>
+        {q.images.map((img, i) => (
+          <div key={i} className="flex items-start gap-3 rounded-lg bg-ink-800/50 p-2">
+            <span className="mt-5 w-5 text-right text-sm text-ink-400">{i + 1}</span>
+            <ImageField label="" compact value={img.src} onChange={(src) => editR((d) => (d.images[i]!.src = src))} />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="inline-flex rounded-lg bg-ink-900 p-0.5" role="group">
+                {[true, false].map((yes) => (
+                  <button
+                    key={String(yes)}
+                    type="button"
+                    aria-pressed={img.yes === yes}
+                    onClick={() => editR((d) => (d.images[i]!.yes = yes))}
+                    className={`rounded-md px-3 py-1 text-sm font-semibold ${img.yes === yes ? (yes ? "bg-emerald-500 text-ink-950" : "bg-red-500 text-white") : "text-ink-200"}`}
+                  >
+                    {yes ? t("editor.imageYes") : t("editor.imageNo")}
+                  </button>
+                ))}
+              </div>
+              <LocalizedInput label="" value={img.caption} quizLang={quizLang} onChange={(v) => editR((d) => setOpt(d.images[i]!, "caption", v))} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <button type="button" className="px-1 text-ink-400 disabled:opacity-30" disabled={i === 0} aria-label={t("common.moveUp")} onClick={() => editR((d) => d.images.splice(i - 1, 0, d.images.splice(i, 1)[0]!))}>↑</button>
+              <button type="button" className="px-1 text-ink-400 disabled:opacity-30" disabled={i === q.images.length - 1} aria-label={t("common.moveDown")} onClick={() => editR((d) => d.images.splice(i + 1, 0, d.images.splice(i, 1)[0]!))}>↓</button>
+              <button type="button" className="px-1 text-red-300" aria-label={t("common.delete")} onClick={() => editR((d) => d.images.splice(i, 1))}>✕</button>
+            </div>
+          </div>
+        ))}
+        <button type="button" className="btn-ghost btn-sm" disabled={busy || q.images.length >= 20} onClick={() => multi.current?.click()}>
+          {busy ? t("common.saving") : t("editor.addImages")}
+        </button>
+        <input ref={multi} type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={(e) => e.target.files && void addFiles(e.target.files)} />
+      </fieldset>
+    </div>
+  );
+}
 
 export function ItemEditor({ item, round, quizLang, onChange }: Props) {
   const { t } = useTranslation();
@@ -141,7 +214,12 @@ function SlideForm({
           onChange={(v) => edit((d) => setOpt(d, "countdownSec", v))}
         />
       </div>
-      {slide.media && <p className="text-sm text-ink-400">{t("editor.hasMedia", { type: slide.media.type })}</p>}
+      <ImageField
+        label={t("editor.backgroundImage")}
+        value={slide.background && "image" in slide.background ? slide.background.image : undefined}
+        onChange={(src) => edit((d) => (d.background = { image: src }))}
+      />
+      <MediaEditor label={t("editor.media")} value={slide.media} allowPlayBefore={false} onChange={(m) => edit((d) => setOpt(d, "media", m))} />
     </div>
   );
 }
@@ -251,8 +329,20 @@ function QuestionForm({
 
       <AnswerFields q={q} quizLang={quizLang} edit={edit} />
 
-      {q.answerType !== "rapid_sequence" && q.media && (
-        <p className="text-sm text-ink-400">{t("editor.hasMedia", { type: q.media.type })}</p>
+      {q.answerType !== "rapid_sequence" && (
+        <>
+          <MediaEditor
+            label={t("editor.media")}
+            value={q.media}
+            onChange={(m) => edit((d) => d.answerType !== "rapid_sequence" && setOpt(d, "media", m))}
+          />
+          <MediaEditor
+            label={t("editor.revealMedia")}
+            value={q.revealMedia}
+            allowPlayBefore={false}
+            onChange={(m) => edit((d) => d.answerType !== "rapid_sequence" && setOpt(d, "revealMedia", m))}
+          />
+        </>
       )}
 
       <LocalizedInput
@@ -440,7 +530,7 @@ function AnswerFields({
       );
 
     case "rapid_sequence":
-      return null;
+      return <RapidFields q={q} quizLang={quizLang} edit={edit} />;
   }
 }
 

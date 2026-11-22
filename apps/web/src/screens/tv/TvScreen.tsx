@@ -8,7 +8,8 @@ import { useGameSocket } from "../../lib/socket";
 import { setLanguage } from "../../i18n";
 import { useQuizText } from "../../lib/text";
 import { Lobby, PhotoGrid } from "./TvLobby";
-import { QuestionView, SlideView } from "./TvItem";
+import { QuestionView, SlideView, type SendTv } from "./TvItem";
+import { SequenceView } from "./TvSequence";
 import { Scoreboard } from "./TvScoreboard";
 
 export function TvScreen() {
@@ -17,7 +18,8 @@ export function TvScreen() {
 
 function TvLive() {
   const { t } = useTranslation();
-  const { view, connected, clockOffset } = useGameSocket<ServerView<TvView>>({ role: "tv" });
+  const { view, connected, clockOffset, send } = useGameSocket<ServerView<TvView>>({ role: "tv" });
+  const sendTv: SendTv = (intent) => void send(intent);
   const live = view && !isIdle(view) ? view : null;
   const text = useQuizText(live?.quizLang);
   const [join, setJoin] = useState<TvJoinInfo | null>(null);
@@ -48,9 +50,12 @@ function TvLive() {
   } else if (live.phase === "finished") {
     body = <Scoreboard view={live} final />;
   } else if (live.item?.kind === "slide") {
-    body = live.item.show === "scoreboard" ? <Scoreboard view={live} title={text(live.item.title)} /> : <SlideView view={live} />;
+    body =
+      live.item.show === "scoreboard" ? <Scoreboard view={live} title={text(live.item.title)} /> : <SlideView view={live} sendTv={sendTv} />;
+  } else if (live.item?.answerType === "rapid_sequence") {
+    body = <SequenceView view={live} clockOffset={clockOffset} />;
   } else {
-    body = <QuestionView view={live} clockOffset={clockOffset} />;
+    body = <QuestionView view={live} clockOffset={clockOffset} sendTv={sendTv} />;
   }
 
   const message = live?.overlay.message;
@@ -59,6 +64,7 @@ function TvLive() {
   return (
     <Stage>
       {body}
+      <IpAddressHint view={live} />
       {showScoreboard && (
         <div className="absolute inset-0 z-20 bg-ink-950/95">
           <Scoreboard view={live} />
@@ -80,6 +86,41 @@ function TvLive() {
         </div>
       )}
     </Stage>
+  );
+}
+
+/** True when the TV page was opened via a bare IP address (127.0.0.1, 192.168.x.y, …). */
+export const openedViaIp = () => /^(\d+\.){3}\d+$|^\[/.test(window.location.hostname);
+
+/**
+ * Many music videos refuse to embed on pages served from a bare IP address (YouTube
+ * error 150), while the same page via a host name works. On the laptop, localhost
+ * is the fix; this offers the switch.
+ */
+function IpAddressHint({ view }: { view: TvView | null }) {
+  const { t } = useTranslation();
+  const [hidden, setHidden] = useState(false);
+  // Only relevant while a YouTube clip is on screen.
+  const item = view?.item;
+  const hasYouTube =
+    (item?.kind === "question" && item.media?.type === "youtube") ||
+    (item?.kind === "slide" && item.media?.type === "youtube") ||
+    view?.reveal?.revealMedia?.type === "youtube";
+  if (hidden || !hasYouTube || !openedViaIp()) return null;
+  const loopback = window.location.hostname.startsWith("127.");
+  const target = `${window.location.protocol}//localhost:${window.location.port || "80"}${window.location.pathname}`;
+  return (
+    <div className="absolute inset-x-0 top-0 z-40 flex items-center gap-6 bg-amber-500 px-10 py-4 text-[26px] font-semibold text-ink-950">
+      <span className="flex-1">{loopback ? t("tv.ipHintLoopback") : t("tv.ipHintLan")}</span>
+      {loopback && (
+        <a href={target} className="rounded-xl bg-ink-950 px-6 py-2 text-white">
+          {t("tv.ipHintSwitch")}
+        </a>
+      )}
+      <button type="button" className="px-3 text-[32px]" aria-label={t("common.close")} onClick={() => setHidden(true)}>
+        ×
+      </button>
+    </div>
   );
 }
 

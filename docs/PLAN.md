@@ -282,7 +282,9 @@ An admin action "Add a trivia round" pulls multiple-choice questions from the Op
 
 ## YouTube and Spotify
 
-Both play on the TV page, so the TV should be a browser on the laptop itself, opened at `http://127.0.0.1:8080/tv` and shown via HDMI or a cast Chrome tab. That one choice solves YouTube sign-in, Spotify playback and Spotify's redirect rules together.
+Both play on the TV page, so the TV should be a browser on the laptop itself, opened at `http://localhost:8080/tv` and shown via HDMI or a cast Chrome tab. That one choice solves YouTube sign-in and Spotify playback together; the one-time Spotify connect step still uses `http://127.0.0.1`, because of Spotify's redirect rules.
+
+*Found during Phase 3:* the TV must use a host name such as `localhost`, not `127.0.0.1` or a LAN IP. Many label-owned music videos refuse to play in embeds on a page served from a bare IP address (player error 150), while the same video plays on `localhost`, `*.localhost` or a `.local` name. Checked in Chrome and Chromium with the IFrame Player API; YouTube's own API demo video plays from IP addresses too, so it is a per-video rights setting, not a general block. `localhost` is a secure context, so the Web Playback SDK requirement still holds.
 
 ### YouTube without ads
 
