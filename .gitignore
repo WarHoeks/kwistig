@@ -1,0 +1,9 @@
+node_modules/
+dist/
+data/
+data-dev/
+*.tsbuildinfo
+test-results/
+playwright-report/
+.env
+.claude/settings.local.json

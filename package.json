@@ -1,0 +1,31 @@
+{
+  "name": "kwistig",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "packages/shared",
+    "apps/server",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @kwistig/server & npm run dev -w @kwistig/web",
+    "dev:server": "npm run dev -w @kwistig/server",
+    "dev:web": "npm run dev -w @kwistig/web",
+    "build": "npm run build -w @kwistig/shared && npm run build -w @kwistig/web && npm run build -w @kwistig/server",
+    "start": "node apps/server/dist/index.js",
+    "typecheck": "tsc -b && tsc -p apps/web",
+    "test": "vitest run",
+    "e2e": "playwright test -c e2e/playwright.config.ts",
+    "i18n:check": "node --experimental-strip-types scripts/check-i18n.ts",
+    "db:generate": "npm run db:generate -w @kwistig/server"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kwistig",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["apps/server/dist/index.js"],
+      "port": 8080,
+      "env": { "DATA_DIR": "data-dev", "HOST_PIN": "1234" }
+    }
+  ]
+}

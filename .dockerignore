@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+data
+.git
+test-results
+playwright-report
+e2e
+docs
+samples
+*.md

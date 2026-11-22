@@ -1,0 +1,16 @@
+services:
+  kwistig:
+    build: .
+    image: kwistig:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data        # SQLite database + uploaded media
+    environment:
+      - PORT=8080
+      - DEFAULT_LOCALE=nl
+      - HOST_PIN=change-me              # protects /admin and /host
+      - PUBLIC_BASE_URL=                # e.g. http://192.168.1.23:8080, used in the QR code
+      - SPOTIFY_CLIENT_ID=              # optional, enables Spotify questions
+      - SPOTIFY_REDIRECT_URI=http://127.0.0.1:8080/api/spotify/callback
+    restart: unless-stopped
