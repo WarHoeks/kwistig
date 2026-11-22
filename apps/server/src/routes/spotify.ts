@@ -79,6 +79,10 @@ export async function spotifyRoutes(app: FastifyInstance) {
   });
 
   app.get("/devices", host, async () => spotify.devices().catch(asHttp));
+  app.get("/tracks/:id", host, async (req) => {
+    const { id } = parse(z.object({ id: z.string().regex(/^[A-Za-z0-9]{22}$/) }), req.params);
+    return spotify.track(id).catch(asHttp);
+  });
   app.post("/diagnose", host, async () => spotify.diagnose());
   app.get("/playlists", host, async () => spotify.playlists().catch(asHttp));
   app.get("/playlists/:id/tracks", host, async (req) => {

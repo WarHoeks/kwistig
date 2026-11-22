@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { mediaUrl, youTubeId, type Media } from "@kwistig/shared";
+import { mediaUrl, spotifyTrackId, youTubeId, type Media, type SpotifyTrack } from "@kwistig/shared";
 import { api, RequestError } from "../../lib/api";
 import { loadYouTubeApi } from "../../components/media/YouTubePlayer";
 import { Field, OptionalNumber, setOpt } from "./fields";
@@ -117,11 +117,14 @@ export function MediaEditor({
   value,
   onChange,
   allowPlayBefore = true,
+  slot = "question",
 }: {
   label: string;
   value: Media | undefined;
   onChange: (m: Media | undefined) => void;
   allowPlayBefore?: boolean;
+  /** "reveal": "before" means after the lock and before the answer is shown. */
+  slot?: "question" | "reveal";
 }) {
   const { t } = useTranslation();
   const typeId = useId();
@@ -160,8 +163,8 @@ export function MediaEditor({
               value={value.play ?? "with"}
               onChange={(e) => edit((d) => setOpt(d, "play", e.target.value === "before" ? "before" : undefined))}
             >
-              <option value="with">{t("editor.playWith")}</option>
-              <option value="before">{t("editor.playBefore")}</option>
+              <option value="with">{slot === "reveal" ? t("editor.revealWith") : t("editor.playWith")}</option>
+              <option value="before">{slot === "reveal" ? t("editor.revealBefore") : t("editor.playBefore")}</option>
             </select>
           </Field>
         )}
@@ -194,8 +197,14 @@ export function MediaEditor({
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="sm:col-span-3">
             <Field label={t("editor.spotifyUri")}>
-              <input className="field font-mono text-sm" value={value.uri} onChange={(e) => edit((d) => d.type === "spotify" && (d.uri = e.target.value.trim()))} />
+              <input
+                className="field font-mono text-sm"
+                placeholder="https://open.spotify.com/track/…"
+                value={value.uri}
+                onChange={(e) => edit((d) => d.type === "spotify" && (d.uri = e.target.value.trim()))}
+              />
             </Field>
+            <SpotifyTrackCheck uri={value.uri} endSec={value.endSec} />
           </div>
           <StartEnd value={value} edit={edit} />
           <p className="text-xs text-ink-400 sm:col-span-3">{t("editor.spotifyHint")}</p>
@@ -204,6 +213,40 @@ export function MediaEditor({
 
       {value?.type === "news" && <NewsFields value={value} edit={edit} />}
     </fieldset>
+  );
+}
+
+/** Shows which track a pasted Spotify link is, read from Spotify (needs a connected account). */
+function SpotifyTrackCheck({ uri, endSec }: { uri: string; endSec: number | undefined }) {
+  const { t } = useTranslation();
+  const id = spotifyTrackId(uri);
+  const [result, setResult] = useState<{ ok: true; track: SpotifyTrack } | { ok: false; code: string } | null>(null);
+
+  useEffect(() => {
+    setResult(null);
+    if (!id) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      api<SpotifyTrack>(`/spotify/tracks/${id}`)
+        .then((track) => !cancelled && setResult({ ok: true, track }))
+        .catch((err) => !cancelled && setResult({ ok: false, code: err instanceof RequestError ? err.code : "spotify_api_error" }));
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [id]);
+
+  if (!uri) return null;
+  if (!id) return <p className="mt-1 text-sm text-red-300">⚠ {t("editor.spotifyBadLink")}</p>;
+  if (!result) return <p className="mt-1 text-sm text-ink-400">{t("editor.youtubeChecking")}</p>;
+  if (!result.ok) return <p className="mt-1 text-sm text-gold-300">⚠ {t(`spotify.errors.${result.code}`, { defaultValue: t("errors.generic") })}</p>;
+  const dur = Math.round(result.track.durationMs / 1000);
+  return (
+    <p className="mt-1 text-sm text-emerald-300" data-testid="spotify-check">
+      ✓ {result.track.artists.join(", ")} — {result.track.name} ({Math.floor(dur / 60)}:{String(dur % 60).padStart(2, "0")})
+      {endSec !== undefined && endSec > dur && <span className="ml-2 text-red-300">{t("editor.endAfterTrack")}</span>}
+    </p>
   );
 }
 

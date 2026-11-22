@@ -272,6 +272,12 @@ export class SpotifyService {
     await this.api("PUT", `/me/player/volume?volume_percent=${Math.round(percent)}&device_id=${encodeURIComponent(deviceId)}`);
   }
 
+  /** One track, for the editor's link check. */
+  async track(id: string): Promise<SpotifyTrack> {
+    const t = await this.api<RawTrack>("GET", `/tracks/${encodeURIComponent(id)}`);
+    return { uri: t.uri, name: t.name, artists: t.artists.map((a) => a.name), durationMs: t.duration_ms };
+  }
+
   // ---------------------------------------------------------------- playlists
 
   private accountId(): string | null {
