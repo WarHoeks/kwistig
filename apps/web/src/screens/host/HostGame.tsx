@@ -5,7 +5,78 @@ import { TeamAvatar } from "../../components/TeamAvatar";
 import { formatScore, OPTION_LETTERS, useQuizText } from "../../lib/text";
 import { useHost } from "./HostScreen";
 
-const PLAYABLE = ["multiple_choice", "true_false", "open", "number"];
+const PLAYABLE = ["multiple_choice", "true_false", "open", "number", "rapid_sequence"];
+
+/** Play/pause, replay from the start marker and mute for the TV's audio/video, with its live status. */
+function MediaControls({ view }: { view: HostView }) {
+  const { t } = useTranslation();
+  const { send } = useHost();
+  const m = view.media;
+  if (!m) return null;
+  const playing = m.status === "playing";
+  return (
+    <section className="card space-y-3 p-4" data-testid="host-media">
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold text-ink-200">
+          {m.slot === "reveal" ? t("host.revealMedia") : t("host.media")}
+        </span>
+        <span
+          className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-bold ${
+            m.status === "playing" ? "bg-emerald-500 text-ink-950" : m.status === "error" ? "bg-red-500 text-white" : "bg-ink-700 text-ink-200"
+          }`}
+          data-testid="host-media-status"
+        >
+          {t(`host.mediaStatus.${m.status}`)}
+        </span>
+      </div>
+      {m.status === "error" && (
+        <p className="text-sm text-red-300">{t(`tv.mediaErrors.${m.error}`, { defaultValue: t("tv.mediaError") })}</p>
+      )}
+      <div className="grid grid-cols-3 gap-2">
+        <button type="button" className="btn-primary" onClick={() => void send({ type: playing ? "mediaPause" : "mediaPlay" })}>
+          {playing ? `❚❚ ${t("host.pause")}` : `▶ ${t("host.play")}`}
+        </button>
+        <button type="button" className="btn-ghost" onClick={() => void send({ type: "mediaReplay" })}>
+          ↺ {t("host.replay")}
+        </button>
+        <button
+          type="button"
+          className={`btn-ghost ${m.muted ? "ring-2 ring-gold-400" : ""}`}
+          aria-pressed={m.muted}
+          onClick={() => void send({ type: "mediaMute", on: !m.muted })}
+        >
+          {m.muted ? `🔇 ${t("host.unmute")}` : `🔊 ${t("host.mute")}`}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/** At a flitsreeks reveal: step through the images one by one, or show the grid. */
+function SpotlightControls({ view, count }: { view: HostView; count: number }) {
+  const { t } = useTranslation();
+  const { send } = useHost();
+  const cur = view.spotlight;
+  return (
+    <section className="card flex items-center gap-2 p-3">
+      <button type="button" className="btn-ghost btn-sm" disabled={cur === 0} onClick={() => void send({ type: "spotlight", index: cur === null ? 0 : cur - 1 })}>
+        ◀
+      </button>
+      <span className="flex-1 text-center text-sm">{cur === null ? t("host.grid") : `${cur + 1} / ${count}`}</span>
+      <button
+        type="button"
+        className="btn-ghost btn-sm"
+        disabled={cur === count - 1}
+        onClick={() => void send({ type: "spotlight", index: cur === null ? 0 : cur + 1 })}
+      >
+        ▶
+      </button>
+      <button type="button" className="btn-ghost btn-sm" disabled={cur === null} onClick={() => void send({ type: "spotlight", index: null })}>
+        {t("host.grid")}
+      </button>
+    </section>
+  );
+}
 
 export function HostGame() {
   const { t } = useTranslation();
@@ -53,8 +124,13 @@ export function HostGame() {
 
       <PrimaryAction view={view} playable={!!playable} />
 
-      {/* Timer */}
-      {view.phase === "item" && view.step === "answering" && (
+      {view.phase === "item" && <MediaControls view={view} />}
+      {view.phase === "item" && view.step === "revealed" && item?.kind === "question" && item.answerType === "rapid_sequence" && (
+        <SpotlightControls view={view} count={item.images.length} />
+      )}
+
+      {/* Timer (a flitsreeks times itself) */}
+      {view.phase === "item" && view.step === "answering" && !(item?.kind === "question" && item.answerType === "rapid_sequence") && (
         <section className="card space-y-3 p-4">
           <div className="flex items-center gap-3">
             <span className="text-sm font-semibold text-ink-200">{t("host.timer")}</span>
@@ -84,7 +160,10 @@ export function HostGame() {
       )}
 
       {/* Answers */}
-      {view.phase === "item" && playable && view.step !== "shown" && <Answers view={view} />}
+      {view.phase === "item" &&
+        playable &&
+        view.step !== "shown" &&
+        !(view.step === "answering" && item?.kind === "question" && item.answerType === "rapid_sequence") && <Answers view={view} />}
 
       {/* Navigation */}
       <div className="grid grid-cols-3 gap-2">
@@ -180,12 +259,29 @@ function PrimaryAction({ view, playable }: { view: HostView; playable: boolean }
     );
   }
   switch (view.step) {
-    case "shown":
+    case "shown": {
+      const fi = view.fullItem;
+      const rapid = fi?.kind === "question" && fi.answerType === "rapid_sequence";
+      // "Play first" clips: start the clip; the question appears when it ends.
+      const before = fi?.kind === "question" && fi.answerType !== "rapid_sequence" && fi.media?.play === "before";
+      if (before && view.media && (view.media.status === "idle" || view.media.status === "paused")) {
+        return (
+          <div className="grid gap-2">
+            <button type="button" className={big} onClick={() => void send({ type: "mediaPlay" })}>
+              ▶ {t("host.action.playFirst")}
+            </button>
+            <button type="button" className="btn-ghost w-full" onClick={() => void send({ type: "open" })}>
+              {t("host.action.open")}
+            </button>
+          </div>
+        );
+      }
       return (
         <button type="button" className={big} onClick={() => void send({ type: "open" })}>
-          ▶ {t("host.action.open")}
+          ▶ {rapid ? t("host.action.startSequence") : t("host.action.open")}
         </button>
       );
+    }
     case "answering":
       return (
         <button type="button" className={`${big} !bg-red-500 !text-white`} onClick={() => void send({ type: "lock" })}>
@@ -230,8 +326,9 @@ function CorrectAnswer({ item, view }: { item: Extract<Item, { kind: "question" 
     case "buzzer":
       shown = text(item.answer);
       break;
-    default:
-      return null;
+    case "rapid_sequence":
+      shown = `${t("host.yesImages")}: ${item.images.flatMap((img, i) => (img.yes ? [i + 1] : [])).join(", ") || "–"}`;
+      break;
   }
   return (
     <div className="rounded-lg bg-emerald-500/15 px-3 py-2" data-testid="host-correct">
@@ -254,6 +351,11 @@ function Answers({ view }: { view: HostView }) {
   const answeredCount = answering ? view.ballots.length : view.answers.length;
 
   const show = (v: AnswerValue): string => {
+    if (item?.kind === "question" && item.answerType === "rapid_sequence" && typeof v === "string") {
+      // "10110" against the right answers: show how many images the team got right.
+      const right = item.images.filter((img, i) => (v[i] === "1") === img.yes).length;
+      return t("host.imagesRight", { right, total: item.images.length });
+    }
     if (item?.kind === "question" && item.answerType === "multiple_choice" && typeof v === "number") {
       return `${OPTION_LETTERS[v]}: ${text(item.options[v])}`;
     }
@@ -293,7 +395,7 @@ function Answers({ view }: { view: HostView }) {
                     )}
                   </p>
                 )}
-                {a && (
+                {a && (a.tieBreak || a.totalVotes > 0) && (
                   <p className="text-xs text-ink-400">
                     {a.tieBreak ? (
                       <span className="text-gold-300">{t("host.tieBreak")}</span>
