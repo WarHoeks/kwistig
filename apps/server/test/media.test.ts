@@ -89,8 +89,25 @@ describe("media store and import", () => {
       expect(isPublicIp(ip), ip).toBe(false);
     }
     expect(isPublicIp("142.250.180.14")).toBe(true);
+    expect(isPublicIp("2a00:1450:4001:82a::200e")).toBe(true);
+    // Encodings of internal addresses that string checks miss.
+    for (const ip of ["::ffff:7f00:1", "::ffff:c0a8:101", "::7f00:1", "64:ff9b::7f00:1", "2002:7f00:1::", "0.0.0.0", "100.64.0.1", "ff02::1"]) {
+      expect(isPublicIp(ip), ip).toBe(false);
+    }
     await expect(safeFetch("http://127.0.0.1:8080/api/health")).rejects.toThrow("private_address");
+    // The URL parser turns this into [::ffff:7f00:1]; it must still be refused.
+    await expect(safeFetch("http://[::ffff:127.0.0.1]:8080/")).rejects.toThrow("private_address");
+    await expect(safeFetch("http://user:pass@example.com/")).rejects.toThrow("unsupported_url");
     await expect(safeFetch("file:///etc/passwd")).rejects.toThrow("unsupported_url");
+  });
+
+  it("checks names inside the connection's own lookup, so rebinding can't swap the address", async () => {
+    const { guardedLookup } = fetchInternals;
+    const lookup = (host: string) =>
+      new Promise<string>((resolve) =>
+        guardedLookup(host, { all: false }, (err, address) => resolve(err ? err.message : String(address))),
+      );
+    expect(await lookup("localhost")).toBe("private_address");
   });
 });
 
