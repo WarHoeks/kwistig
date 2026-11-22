@@ -1,0 +1,349 @@
+import { useTranslation } from "react-i18next";
+import type { AnswerValue, HostAnswerView, HostView, Item } from "@kwistig/shared";
+import { CountdownBar, CountdownNumber } from "../../components/Countdown";
+import { TeamAvatar } from "../../components/TeamAvatar";
+import { formatScore, OPTION_LETTERS, useQuizText } from "../../lib/text";
+import { useHost } from "./HostScreen";
+
+const PLAYABLE = ["multiple_choice", "true_false", "open", "number"];
+
+export function HostGame() {
+  const { t } = useTranslation();
+  const { view, send, clockOffset } = useHost();
+  const text = useQuizText(view?.quizLang);
+  if (!view) return null;
+
+  const item = view.fullItem;
+  const isQuestion = item?.kind === "question";
+  const playable = isQuestion && PLAYABLE.includes(item.answerType);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-baseline gap-2 text-sm text-ink-400">
+        <span className="font-semibold text-ink-200">{t(`host.phase.${view.phase}`)}</span>
+        {view.step && <span>· {t(`host.step.${view.step}`)}</span>}
+        {view.item && <span className="ml-auto">{t("host.item", { n: view.item.cursor + 1, total: view.totalItems })}</span>}
+      </div>
+
+      {/* Lobby & photos */}
+      {(view.phase === "lobby" || view.phase === "photos") && <PreGame view={view} />}
+
+      {/* Current item */}
+      {view.phase === "item" && item && (
+        <section className="card space-y-3 p-4" data-testid="host-current">
+          <p className="text-xs uppercase tracking-widest text-ink-400">
+            {view.item && text(view.item.roundTitle)} · {item.kind === "slide" ? t("host.slide") : t(`editor.answerTypes.${item.answerType}`)}
+          </p>
+          <p className="text-xl font-bold leading-snug">{text(item.kind === "slide" ? item.title : item.prompt)}</p>
+          {isQuestion && <CorrectAnswer item={item} view={view} />}
+          {isQuestion && item.hostNotes && (
+            <p className="rounded-lg bg-gold-400/15 px-3 py-2 text-sm text-gold-300">
+              <strong>{t("host.notes")}:</strong> {item.hostNotes}
+            </p>
+          )}
+          {isQuestion && !playable && <p className="text-sm text-ink-400">{t("host.unsupported")}</p>}
+        </section>
+      )}
+
+      {view.phase === "finished" && (
+        <section className="card p-4 text-center">
+          <p className="text-2xl font-bold">{t("tv.final")}</p>
+        </section>
+      )}
+
+      <PrimaryAction view={view} playable={!!playable} />
+
+      {/* Timer */}
+      {view.phase === "item" && view.step === "answering" && (
+        <section className="card space-y-3 p-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-ink-200">{t("host.timer")}</span>
+            <CountdownNumber timer={view.timer} clockOffset={clockOffset} className="text-2xl font-bold" />
+            <div className="ml-auto flex gap-2">
+              {!view.timer && (
+                <button type="button" className="btn-ghost btn-sm" onClick={() => void send({ type: "timerStart" })}>
+                  {t("host.timerStart")}
+                </button>
+              )}
+              <button type="button" className="btn-ghost btn-sm" onClick={() => void send({ type: "timerAdd", seconds: 15 })}>
+                {t("host.timerAdd")}
+              </button>
+              {view.timer && (
+                <button type="button" className="btn-ghost btn-sm" onClick={() => void send({ type: "timerStop" })}>
+                  {t("host.timerStop")}
+                </button>
+              )}
+            </div>
+          </div>
+          <CountdownBar timer={view.timer} clockOffset={clockOffset} className="h-2" />
+          <label className="flex items-center gap-2 text-sm text-ink-200">
+            <input type="checkbox" className="accent-amber-400" checked={view.autoLock} onChange={(e) => void send({ type: "setAutoLock", on: e.target.checked })} />
+            {t("host.autoLock")}
+          </label>
+        </section>
+      )}
+
+      {/* Answers */}
+      {view.phase === "item" && playable && view.step !== "shown" && <Answers view={view} />}
+
+      {/* Navigation */}
+      <div className="grid grid-cols-3 gap-2">
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={!(view.phase === "finished" || (view.phase === "item" && (view.item?.cursor ?? 0) > 0))}
+          onClick={() => void send({ type: "previous" })}
+        >
+          ← {t("host.action.previous")}
+        </button>
+        <button
+          type="button"
+          className={`btn-ghost ${view.overlay.scoreboard ? "ring-2 ring-gold-400" : ""}`}
+          onClick={() => void send({ type: "scoreboard", show: !view.overlay.scoreboard })}
+        >
+          {view.overlay.scoreboard ? t("host.hideScoreboard") : t("host.showScoreboard")}
+        </button>
+        <button type="button" className="btn-ghost" disabled={view.phase === "finished"} onClick={() => void send({ type: "next" })}>
+          {t("host.action.next")} →
+        </button>
+      </div>
+
+      {view.nextItem && view.phase !== "finished" && (
+        <section className="rounded-xl border border-ink-800 p-3">
+          <p className="text-xs uppercase tracking-widest text-ink-400">{t("host.nextUp")}</p>
+          <p className="truncate">{text(view.nextItem.item.kind === "slide" ? view.nextItem.item.title : view.nextItem.item.prompt)}</p>
+        </section>
+      )}
+
+      {(view.phase === "item" || view.phase === "finished") && <RunOrder view={view} />}
+    </div>
+  );
+}
+
+function PreGame({ view }: { view: HostView }) {
+  const { t } = useTranslation();
+  const missing = view.teamsDetail.filter((tm) => !tm.photoUrl).map((tm) => tm.name);
+  return (
+    <section className="card space-y-3 p-4">
+      <p className="font-semibold">{t("host.teamsCount", { count: view.teamsDetail.length })}</p>
+      <ul className="flex flex-wrap gap-2">
+        {view.teamsDetail.map((tm) => (
+          <li key={tm.id} className="flex items-center gap-2 rounded-full bg-ink-800 py-1 pl-1 pr-3 text-sm">
+            <TeamAvatar team={tm} size={28} rounded="rounded-full" />
+            {tm.name}
+          </li>
+        ))}
+      </ul>
+      {view.phase === "photos" && (
+        <p className="text-sm text-ink-200">{missing.length ? t("host.photosMissing", { teams: missing.join(", ") }) : t("host.allPhotos")}</p>
+      )}
+    </section>
+  );
+}
+
+/** The one big button that does the next logical step. */
+function PrimaryAction({ view, playable }: { view: HostView; playable: boolean }) {
+  const { t } = useTranslation();
+  const { send } = useHost();
+  const big = "btn-primary w-full py-5 text-xl";
+
+  if (view.phase === "lobby") {
+    return (
+      <div className="grid gap-2">
+        <button type="button" className={big} onClick={() => void send({ type: "startPhotos" })}>
+          📸 {t("host.action.startPhotos")}
+        </button>
+        <button type="button" className="btn-ghost w-full" onClick={() => void send({ type: "beginQuiz" })}>
+          {t("host.action.skipPhotos")}
+        </button>
+      </div>
+    );
+  }
+  if (view.phase === "photos") {
+    const allIn = view.teamsDetail.every((tm) => tm.photoUrl);
+    return (
+      <button type="button" className={big} onClick={() => void send({ type: "beginQuiz" })}>
+        ▶ {allIn ? t("host.action.beginQuiz") : t("host.action.beginWithoutPhotos")}
+      </button>
+    );
+  }
+  if (view.phase !== "item") return null;
+
+  const isLast = view.item ? view.item.cursor === view.totalItems - 1 : false;
+  const nextLabel = isLast ? t("host.action.finish") : t("host.action.next");
+
+  if (view.item?.kind === "slide" || !playable) {
+    return (
+      <button type="button" className={big} onClick={() => void send({ type: "next" })}>
+        {nextLabel} →
+      </button>
+    );
+  }
+  switch (view.step) {
+    case "shown":
+      return (
+        <button type="button" className={big} onClick={() => void send({ type: "open" })}>
+          ▶ {t("host.action.open")}
+        </button>
+      );
+    case "answering":
+      return (
+        <button type="button" className={`${big} !bg-red-500 !text-white`} onClick={() => void send({ type: "lock" })}>
+          ■ {t("host.action.lock")}
+        </button>
+      );
+    case "locked":
+      return (
+        <button type="button" className={`${big} !bg-emerald-500`} onClick={() => void send({ type: "reveal" })}>
+          ★ {t("host.action.reveal")}
+        </button>
+      );
+    default:
+      return (
+        <button type="button" className={big} onClick={() => void send({ type: "next" })}>
+          {nextLabel} →
+        </button>
+      );
+  }
+}
+
+function CorrectAnswer({ item, view }: { item: Extract<Item, { kind: "question" }>; view: HostView }) {
+  const { t } = useTranslation();
+  const text = useQuizText(view.quizLang);
+  let shown: string | null = null;
+  let extra: string | null = null;
+  switch (item.answerType) {
+    case "multiple_choice":
+      shown = `${OPTION_LETTERS[item.correct]}: ${text(item.options[item.correct])}`;
+      break;
+    case "true_false":
+      shown = item.correct ? t("play.true") : t("play.false");
+      break;
+    case "open":
+      shown = item.acceptedAnswers[0] ?? "";
+      if (item.acceptedAnswers.length > 1) extra = `${t("host.accepted")}: ${item.acceptedAnswers.join(" · ")}`;
+      break;
+    case "number":
+      shown = `${item.correct}${item.unit ? ` ${text(item.unit)}` : ""}`;
+      if (item.scoring?.mode === "tolerance") extra = `± ${item.scoring.tolerance}`;
+      break;
+    case "buzzer":
+      shown = text(item.answer);
+      break;
+    default:
+      return null;
+  }
+  return (
+    <div className="rounded-lg bg-emerald-500/15 px-3 py-2" data-testid="host-correct">
+      <p className="text-xs uppercase tracking-widest text-emerald-300">{t("host.correctAnswer")}</p>
+      <p className="text-lg font-bold text-emerald-100">{shown}</p>
+      {extra && <p className="text-sm text-emerald-200/80">{extra}</p>}
+    </div>
+  );
+}
+
+function Answers({ view }: { view: HostView }) {
+  const { t, i18n } = useTranslation();
+  const { send } = useHost();
+  const text = useQuizText(view.quizLang);
+  const item = view.fullItem;
+  const byTeam = new Map<number, HostAnswerView>(view.answers.map((a) => [a.teamId, a]));
+  const canMark = view.step === "locked" || view.step === "revealed";
+
+  const show = (v: AnswerValue): string => {
+    if (item?.kind === "question" && item.answerType === "multiple_choice" && typeof v === "number") {
+      return `${OPTION_LETTERS[v]}: ${text(item.options[v])}`;
+    }
+    if (typeof v === "boolean") return v ? t("play.true") : t("play.false");
+    if (typeof v === "number") return new Intl.NumberFormat(i18n.language === "en" ? "en-GB" : "nl-NL").format(v);
+    return v;
+  };
+
+  return (
+    <section className="card p-4" data-testid="host-answers">
+      <p className="mb-3 text-sm font-semibold text-ink-200">
+        {t("host.answered", { count: view.answers.length, total: view.teamsDetail.length })}
+      </p>
+      <ul className="space-y-2">
+        {view.teamsDetail.map((team) => {
+          const a = byTeam.get(team.id);
+          return (
+            <li key={team.id} className="flex items-center gap-3 rounded-lg bg-ink-800/60 p-2" data-testid={`host-answer-${team.id}`}>
+              <TeamAvatar team={team} size={36} rounded="rounded-lg" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{team.name}</p>
+                <p className={`truncate ${a ? "" : "text-ink-400 italic"}`}>
+                  {a ? show(a.value) : t("host.noAnswer")}
+                  {a?.match && a.match !== "exact" && (
+                    <span className={`ml-2 rounded px-1.5 text-xs ${a.match === "fuzzy" ? "bg-gold-400/25 text-gold-300" : "bg-ink-700 text-ink-200"}`}>
+                      {t(`host.match.${a.match}`)}
+                    </span>
+                  )}
+                </p>
+              </div>
+              {a && canMark ? (
+                <div className="flex shrink-0 gap-1" role="group" aria-label={team.name}>
+                  {(["correct", "half", "wrong"] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      aria-pressed={a.verdict === v}
+                      aria-label={t(`host.verdict.${v}`)}
+                      onClick={() => void send({ type: "mark", teamId: team.id, verdict: v })}
+                      className={`h-9 w-9 rounded-lg text-lg font-bold ${
+                        a.verdict === v
+                          ? v === "correct"
+                            ? "bg-emerald-500 text-ink-950"
+                            : v === "half"
+                              ? "bg-amber-400 text-ink-950"
+                              : "bg-red-500 text-white"
+                          : "bg-ink-700 text-ink-400"
+                      }`}
+                    >
+                      {v === "correct" ? "✓" : v === "half" ? "½" : "✗"}
+                    </button>
+                  ))}
+                </div>
+              ) : a ? (
+                <span className="text-xs text-ink-400">{a.byNickname ?? ""}</span>
+              ) : null}
+              {a && view.step === "revealed" && (
+                <span className="w-10 text-right text-sm tabular-nums text-ink-200">+{formatScore(a.points, i18n.language)}</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function RunOrder({ view }: { view: HostView }) {
+  const { t } = useTranslation();
+  const { send } = useHost();
+  const text = useQuizText(view.quizLang);
+  const current = view.item?.cursor;
+  return (
+    <details className="rounded-xl border border-ink-800">
+      <summary className="cursor-pointer px-4 py-3 font-semibold">{t("host.runOrder")}</summary>
+      <ol className="max-h-96 overflow-y-auto border-t border-ink-800">
+        {view.outline.map((o) => (
+          <li key={o.cursor}>
+            <button
+              type="button"
+              onClick={() => void send({ type: "jump", cursor: o.cursor })}
+              className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm ${o.cursor === current ? "bg-ink-700" : "hover:bg-ink-800"}`}
+            >
+              <span className="w-6 text-right tabular-nums text-ink-400">{o.cursor + 1}</span>
+              <span className={`h-2 w-2 shrink-0 rounded-full ${o.step === "revealed" ? "bg-emerald-400" : o.step ? "bg-gold-400" : "bg-ink-600"}`} />
+              <span className="flex-1 truncate">{text(o.label)}</span>
+              <span className="text-xs text-ink-400">
+                {o.kind === "slide" ? t("host.slide") : t(`editor.answerTypes.${o.answerType}`)}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ol>
+    </details>
+  );
+}
