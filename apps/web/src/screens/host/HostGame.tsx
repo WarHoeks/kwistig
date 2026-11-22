@@ -248,7 +248,10 @@ function Answers({ view }: { view: HostView }) {
   const text = useQuizText(view.quizLang);
   const item = view.fullItem;
   const byTeam = new Map<number, HostAnswerView>(view.answers.map((a) => [a.teamId, a]));
+  const ballots = new Map(view.ballots.map((b) => [b.teamId, b.options]));
+  const answering = view.step === "answering";
   const canMark = view.step === "locked" || view.step === "revealed";
+  const answeredCount = answering ? view.ballots.length : view.answers.length;
 
   const show = (v: AnswerValue): string => {
     if (item?.kind === "question" && item.answerType === "multiple_choice" && typeof v === "number") {
@@ -262,24 +265,43 @@ function Answers({ view }: { view: HostView }) {
   return (
     <section className="card p-4" data-testid="host-answers">
       <p className="mb-3 text-sm font-semibold text-ink-200">
-        {t("host.answered", { count: view.answers.length, total: view.teamsDetail.length })}
+        {t("host.answered", { count: answeredCount, total: view.teamsDetail.length })}
       </p>
       <ul className="space-y-2">
         {view.teamsDetail.map((team) => {
-          const a = byTeam.get(team.id);
+          const a = answering ? undefined : byTeam.get(team.id);
+          const options = ballots.get(team.id) ?? [];
           return (
             <li key={team.id} className="flex items-center gap-3 rounded-lg bg-ink-800/60 p-2" data-testid={`host-answer-${team.id}`}>
               <TeamAvatar team={team} size={36} rounded="rounded-lg" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{team.name}</p>
-                <p className={`truncate ${a ? "" : "text-ink-400 italic"}`}>
-                  {a ? show(a.value) : t("host.noAnswer")}
-                  {a?.match && a.match !== "exact" && (
-                    <span className={`ml-2 rounded px-1.5 text-xs ${a.match === "fuzzy" ? "bg-gold-400/25 text-gold-300" : "bg-ink-700 text-ink-200"}`}>
-                      {t(`host.match.${a.match}`)}
-                    </span>
-                  )}
-                </p>
+                {answering ? (
+                  // Live tally while teams vote: "C: Amsterdam (2) · A: Rotterdam (1)".
+                  <p className={`truncate text-sm ${options.length ? "" : "text-ink-400 italic"}`} data-testid="host-tally">
+                    {options.length
+                      ? options.map((o) => `${show(o.value)} (${o.count})`).join(" · ")
+                      : t("host.noVotes")}
+                  </p>
+                ) : (
+                  <p className={`truncate ${a ? "" : "text-ink-400 italic"}`}>
+                    {a ? show(a.value) : t("host.noAnswer")}
+                    {a?.match && a.match !== "exact" && (
+                      <span className={`ml-2 rounded px-1.5 text-xs ${a.match === "fuzzy" ? "bg-gold-400/25 text-gold-300" : "bg-ink-700 text-ink-200"}`}>
+                        {t(`host.match.${a.match}`)}
+                      </span>
+                    )}
+                  </p>
+                )}
+                {a && (
+                  <p className="text-xs text-ink-400">
+                    {a.tieBreak ? (
+                      <span className="text-gold-300">{t("host.tieBreak")}</span>
+                    ) : (
+                      t("host.voteSummary", { votes: a.votes, total: a.totalVotes })
+                    )}
+                  </p>
+                )}
               </div>
               {a && canMark ? (
                 <div className="flex shrink-0 gap-1" role="group" aria-label={team.name}>
@@ -304,8 +326,6 @@ function Answers({ view }: { view: HostView }) {
                     </button>
                   ))}
                 </div>
-              ) : a ? (
-                <span className="text-xs text-ink-400">{a.byNickname ?? ""}</span>
               ) : null}
               {a && view.step === "revealed" && (
                 <span className="w-10 text-right text-sm tabular-nums text-ink-200">+{formatScore(a.points, i18n.language)}</span>

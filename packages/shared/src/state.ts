@@ -34,12 +34,28 @@ export interface PlayerRec {
   tokenHash: string;
 }
 
+/** One phone's vote for its team's answer. */
+export interface Vote {
+  value: AnswerValue;
+  at: number;
+}
+
+/**
+ * A team's answer, decided at lock time from its phones' votes: the option with
+ * the most votes wins; a tie is broken by a random draw.
+ */
 export interface AnswerRec {
   value: AnswerValue;
+  /** The phone that first proposed the winning option. */
   playerId: number;
   at: number;
   verdict: Verdict;
   points: number;
+  /** Votes for the winning option, and all votes the team cast. */
+  votes: number;
+  totalVotes: number;
+  /** True when the winning option was drawn from a tie. */
+  tieBreak: boolean;
   /** For open answers: how the auto-match went. */
   match?: MatchKind;
   /** True once the host set the verdict by hand. */
@@ -48,7 +64,9 @@ export interface AnswerRec {
 
 export interface ItemRun {
   step: Step;
-  /** Keyed by team id. */
+  /** Votes while answering: team id → player id → vote. */
+  votes: Record<string, Record<string, Vote>>;
+  /** Resolved team answers, keyed by team id. Filled at lock. */
   answers: Record<string, AnswerRec>;
   timer: TimerState | null;
 }
@@ -140,23 +158,36 @@ export interface CommonView {
   timer: TimerState | null;
   reveal: RevealInfo | null;
   overlay: Overlay;
-  /** Team ids that have an answer for the current item. */
+  /** Team ids that have at least one vote or an answer for the current item. */
   answered: number[];
   totalItems: number;
 }
 
 export type TvView = CommonView;
 
+/** One option in a team's vote, with who voted for it. Most votes first. */
+export interface BallotOption {
+  value: AnswerValue;
+  count: number;
+  voters: { id: number; nickname: string | null }[];
+}
+
+/** The team's resolved answer after lock. */
 export interface TeamAnswerView {
   value: AnswerValue;
-  byPlayerId: number;
-  byNickname: string | null;
-  at: number;
+  votes: number;
+  totalVotes: number;
+  tieBreak: boolean;
 }
 
 export interface TeamView extends CommonView {
   me: { playerId: number; nickname: string | null; teamId: number };
   team: PublicTeam & { players: { id: number; nickname: string | null }[] };
+  /** The team's votes on the current question (visible to this team only). */
+  ballot: BallotOption[];
+  /** This phone's own vote. */
+  myVote: AnswerValue | null;
+  /** Set once the question is locked. */
   answer: TeamAnswerView | null;
   /** Only after reveal. */
   result: { verdict: Verdict; points: number } | null;
@@ -165,6 +196,11 @@ export interface TeamView extends CommonView {
 export interface HostAnswerView extends AnswerRec {
   teamId: number;
   byNickname: string | null;
+}
+
+export interface HostBallotView {
+  teamId: number;
+  options: BallotOption[];
 }
 
 export interface HostOutlineEntry {
@@ -182,6 +218,8 @@ export interface HostView extends Omit<CommonView, "reveal"> {
   nextItem: { cursor: number; item: Item } | null;
   outline: HostOutlineEntry[];
   answers: HostAnswerView[];
+  /** Live vote tallies per team while answering. */
+  ballots: HostBallotView[];
   reveal: RevealInfo | null;
   /** Correct answer for the host, at any step. */
   correct: RevealInfo["correct"] | null;

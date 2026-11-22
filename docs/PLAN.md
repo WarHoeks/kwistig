@@ -130,7 +130,7 @@ The host phone is the real control surface during the game:
 ### Team phone
 
 - Scanning the QR opens `/join/<code>` with two choices: **Nieuw team** (team name, emoji, colour) or **Bij een team aansluiten** (pick from the list of teams already in the game). Each phone can add an optional nickname.
-- All phones in a team share one answer. Any of them can pick or change it until the host locks; the choice syncs live to the team's other phones with who made it ("Sanne koos B"). The last change before the lock counts.
+- Each phone in a team votes. For multiple choice and true/false every phone picks an option; for open and number questions a phone types an answer and presses Enter, which proposes it and votes for it, and teammates can tap any proposal to vote for it too. Votes sync live to the team's other phones with who voted for what, and a phone can change or take back its vote until the host locks. At lock the option with the most votes is the team's answer; a tie is decided by a random draw.
 - Each question shows the matching input: answer buttons, a text field, a number field, a buzzer, or the flitsreeks button.
 - After the lock every phone in the team shows "Ingeleverd" and waits.
 - After reveal the phones show whether the team was right, the team's current score and rank, and the team photo with its standings effect.
@@ -168,7 +168,7 @@ Three things sit on top of any state without changing it: a host message overlay
 
 - Every transition is written to SQLite before it is broadcast, so a crashed or restarted container resumes exactly where it was.
 - Each role gets its own projection of the state: the TV and team phones never receive the correct answer, accepted answers or host notes before Revealed.
-- A team's answer is one shared value: any of its phones can change it, the server broadcasts each change to the team's other phones, and the last change before the lock counts. For buzzers and flitsreeks presses the first press from any of the team's phones counts.
+- A team's answer is decided by its phones' votes: each phone has one vote it can change or retract until the lock, the server broadcasts the tally only to that team's phones and the host, and at lock the option with the most votes wins, with a server-side random draw on a tie (open answers count together after normalising case, accents and articles; numbers by value). For buzzers and flitsreeks presses the first press from any of the team's phones counts.
 - Answers arriving after Locked are rejected with a clear message on the phone.
 - Timers and flitsreeks schedules run on the server; clients render countdowns from server timestamps, so a slow phone cannot get extra time.
 - Media start and stop are host commands relayed to the TV, which reports `ended` back so the host sees playback state.

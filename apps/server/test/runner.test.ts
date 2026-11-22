@@ -123,11 +123,14 @@ describe("live game over sockets", () => {
     await send(host, { type: "beginQuiz" });
     await send(host, { type: "next" }); // first question (MC)
     await send(host, { type: "open" });
-    expect(await send(phone1, { type: "setAnswer", value: 0 })).toEqual({ ok: true });
-    const seen = await nextView<TeamView>(phone2, (v) => v.answer?.value === 0);
-    expect(seen.answer).toMatchObject({ byNickname: "Sanne" });
-    await send(phone2, { type: "setAnswer", value: 2 });
-    await nextView<TeamView>(phone1, (v) => v.answer?.value === 2);
+    // Team voting: each phone votes; teammates see the tally with names live.
+    expect(await send(phone1, { type: "vote", value: 0 })).toEqual({ ok: true });
+    const seen = await nextView<TeamView>(phone2, (v) => v.ballot.length === 1);
+    expect(seen.ballot[0]).toMatchObject({ value: 0, count: 1, voters: [{ nickname: "Sanne" }] });
+    await send(phone2, { type: "vote", value: 2 });
+    await nextView<TeamView>(phone1, (v) => v.ballot.length === 2);
+    await send(phone1, { type: "vote", value: 2 }); // Sanne is convinced
+    await nextView<TeamView>(phone2, (v) => v.ballot.length === 1 && v.ballot[0]!.count === 2);
     // Phones can't send host intents.
     expect(await send(phone1, { type: "reveal" })).toEqual({ ok: false, error: "invalid_answer" });
 
@@ -139,17 +142,18 @@ describe("live game over sockets", () => {
     const host2 = socket(url, { role: "host" }, cookie);
     const resumed = await nextView<HostView>(host2);
     expect(resumed).toMatchObject({ phase: "item", step: "answering", item: { cursor: 1 } });
-    expect(resumed.answers).toEqual([expect.objectContaining({ teamId: p1.teamId, value: 2, byNickname: "Jip" })]);
+    expect(resumed.ballots).toEqual([{ teamId: p1.teamId, options: [expect.objectContaining({ value: 2, count: 2 })] }]);
     expect(resumed.teamsDetail[0]!.players.map((p) => p.nickname)).toEqual(["Sanne", "Jip"]);
 
     // The phone rejoins with its token, then the host locks and reveals.
     const phone1b = socket(url, { role: "player", token: p1.token });
-    await nextView<TeamView>(phone1b, (v) => v.answer?.value === 2);
+    await nextView<TeamView>(phone1b, (v) => v.myVote === 2);
     await send(host2, { type: "reveal" });
     const revealed = await nextView<TeamView>(phone1b, (v) => v.step === "revealed");
+    expect(revealed.answer).toEqual({ value: 2, votes: 2, totalVotes: 2, tieBreak: false });
     expect(revealed.result).toEqual({ verdict: "correct", points: 1 });
     expect(revealed.team.score).toBe(1);
-    expect(await send(phone1b, { type: "setAnswer", value: 1 })).toEqual({ ok: false, error: "locked" });
+    expect(await send(phone1b, { type: "vote", value: 1 })).toEqual({ ok: false, error: "locked" });
 
     // Removing a phone tells it so.
     const removed = new Promise((resolve) => phone1b.on("removed", resolve));

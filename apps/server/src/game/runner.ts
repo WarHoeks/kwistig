@@ -110,7 +110,7 @@ export class GameRunner {
     const before = new Set(prev.players.map((p) => p.id));
     const next = this.db.transaction((tx) => {
       let s = prev;
-      for (const intent of build(tx as unknown as Db)) s = reduce(s, intent, { now: this.now(), run: this.run });
+      for (const intent of build(tx as unknown as Db)) s = reduce(s, intent, { now: this.now(), run: this.run, random: Math.random });
       this.persist(tx as unknown as Db, s);
       return s;
     });
@@ -137,7 +137,7 @@ export class GameRunner {
   }
 
   private endInTx(tx: Db, s: GameState) {
-    const ended = s.phase === "finished" ? s : reduce(s, { type: "endSession" }, { now: this.now(), run: this.run });
+    const ended = s.phase === "finished" ? s : reduce(s, { type: "endSession" }, { now: this.now(), run: this.run, random: Math.random });
     this.persist(tx, ended);
     tx.update(gameSession)
       .set({ endedAt: new Date(this.now()).toISOString() })

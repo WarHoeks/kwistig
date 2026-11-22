@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { parseNumberInput, type AnswerValue, type PublicItem, type TeamView } from "@kwistig/shared";
+import type { AnswerValue, TeamView } from "@kwistig/shared";
 import { CountdownBar } from "../../components/Countdown";
 import { LanguageToggle } from "../../components/LanguageToggle";
 import { TeamAvatar } from "../../components/TeamAvatar";
 import { clearPlayer, loadPlayer, squareJpeg } from "../../lib/player";
 import { useGameSocket } from "../../lib/socket";
-import { formatScore, OPTION_COLORS, OPTION_LETTERS, useQuizText } from "../../lib/text";
+import { formatScore, useQuizText } from "../../lib/text";
+import { TeamDecision, TeamVote } from "./Voting";
 import { setLanguage } from "../../i18n";
 
 export function PlayScreen() {
@@ -100,9 +101,10 @@ function PlayBody({
   const text = useQuizText(view.quizLang);
   const [error, setError] = useState<string | null>(null);
 
-  const answer = async (value: AnswerValue) => {
+  /** Vote for a value, or take this phone's vote back with null. */
+  const answer = async (value: AnswerValue | null) => {
     setError(null);
-    const ack = await send({ type: "setAnswer", value });
+    const ack = await send(value === null ? { type: "retractVote" } : { type: "vote", value });
     if (!ack.ok) setError(t(`game.errors.${ack.error}`, { defaultValue: t("errors.generic") }));
   };
 
@@ -148,7 +150,6 @@ function PlayBody({
 
   if (view.step === "revealed") return <Result view={view} />;
 
-  const locked = view.step === "locked";
   return (
     <div className="flex flex-1 flex-col gap-4">
       <div className="flex items-baseline justify-between text-sm text-ink-400">
@@ -160,193 +161,13 @@ function PlayBody({
       {view.step === "answering" && <CountdownBar timer={view.timer} clockOffset={clockOffset} className="h-3" />}
       {item.answerType === "open" && <p className="text-xl font-semibold">{text(item.prompt)}</p>}
 
-      <AnswerInput item={item} view={view} locked={locked} onAnswer={answer} />
-
-      <ChosenBy view={view} />
-      {locked && (
-        <p className="rounded-xl bg-emerald-500/15 py-3 text-center text-lg font-semibold text-emerald-200" data-testid="play-locked">
-          ✓ {t("play.submitted")}
-        </p>
-      )}
+      <TeamVote item={item} view={view} onVote={(v) => void answer(v)} />
       {error && (
         <p role="alert" className="rounded-xl bg-red-500/15 px-4 py-3 text-red-200">
           {error}
         </p>
       )}
     </div>
-  );
-}
-
-function AnswerInput({
-  item,
-  view,
-  locked,
-  onAnswer,
-}: {
-  item: Extract<PublicItem, { kind: "question" }>;
-  view: TeamView;
-  locked: boolean;
-  onAnswer: (v: AnswerValue) => void;
-}) {
-  const { t } = useTranslation();
-  const text = useQuizText(view.quizLang);
-  const current = view.answer?.value;
-
-  if (item.answerType === "multiple_choice" || item.answerType === "true_false") {
-    const labels = item.answerType === "true_false" ? [t("play.true"), t("play.false")] : (item.options ?? []).map(text);
-    const valueOf = (i: number): AnswerValue => (item.answerType === "true_false" ? i === 0 : i);
-    return (
-      <div className={`grid gap-3 ${labels.length > 4 ? "grid-cols-2" : "grid-cols-1"}`}>
-        {labels.map((label, i) => {
-          const selected = current === valueOf(i);
-          return (
-            <button
-              key={i}
-              type="button"
-              disabled={locked}
-              aria-pressed={selected}
-              onClick={() => onAnswer(valueOf(i))}
-              className={`flex min-h-16 items-center gap-3 rounded-2xl px-4 py-3 text-left text-lg font-bold text-ink-950 transition-transform active:scale-[0.98] disabled:active:scale-100 ${
-                selected ? "ring-4 ring-white" : current !== undefined ? "opacity-50" : ""
-              }`}
-              style={{ background: OPTION_COLORS[i] }}
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-ink-950/25 font-display text-xl text-white">
-                {OPTION_LETTERS[i]}
-              </span>
-              <span className="flex-1">{label}</span>
-              {selected && <span aria-hidden>✓</span>}
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
-  return <TextAnswer kind={item.answerType === "number" ? "number" : "text"} current={current} locked={locked} onAnswer={onAnswer} unit={text(item.unit)} />;
-}
-
-/** Text or number field. Shows the team's shared answer and lets anyone change it. */
-function TextAnswer({
-  kind,
-  current,
-  locked,
-  onAnswer,
-  unit,
-}: {
-  kind: "text" | "number";
-  current: AnswerValue | undefined;
-  locked: boolean;
-  onAnswer: (v: AnswerValue) => void;
-  unit: string;
-}) {
-  const { t, i18n } = useTranslation();
-  const [draft, setDraft] = useState("");
-  const [editing, setEditing] = useState(current === undefined);
-  const [invalid, setInvalid] = useState(false);
-  const input = useRef<HTMLInputElement>(null);
-
-  // A teammate's change replaces our view of the answer unless we're typing.
-  useEffect(() => {
-    if (current !== undefined && document.activeElement !== input.current) setEditing(false);
-  }, [current]);
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    if (kind === "number") {
-      const n = parseNumberInput(draft);
-      if (n === undefined) {
-        setInvalid(true);
-        return;
-      }
-      onAnswer(n);
-    } else {
-      if (!draft.trim()) return;
-      onAnswer(draft.trim());
-    }
-    setInvalid(false);
-    setEditing(false);
-    input.current?.blur();
-  };
-
-  const shown =
-    current === undefined
-      ? ""
-      : typeof current === "number"
-        ? new Intl.NumberFormat(i18n.language === "en" ? "en-GB" : "nl-NL").format(current)
-        : String(current);
-
-  if (!editing || locked) {
-    return (
-      <div className="rounded-2xl bg-white/5 p-4">
-        <p className="text-sm text-ink-400">{t("play.yourAnswer")}</p>
-        <p className="break-words text-2xl font-bold" data-testid="play-answer">
-          {shown || "—"} {shown && unit}
-        </p>
-        {!locked && (
-          <button
-            type="button"
-            className="btn-ghost mt-3 w-full"
-            onClick={() => {
-              setDraft(current === undefined ? "" : String(current));
-              setEditing(true);
-              setTimeout(() => input.current?.focus(), 0);
-            }}
-          >
-            {t("play.change")}
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={submit} className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <input
-          ref={input}
-          className="field py-4 text-xl"
-          inputMode={kind === "number" ? "decimal" : "text"}
-          autoComplete="off"
-          autoCapitalize={kind === "number" ? "off" : "sentences"}
-          enterKeyHint="send"
-          maxLength={200}
-          placeholder={kind === "number" ? t("play.typeNumber") : t("play.typeAnswer")}
-          aria-invalid={invalid}
-          value={draft}
-          onChange={(e) => {
-            setDraft(e.target.value);
-            setInvalid(false);
-          }}
-        />
-        {unit && <span className="text-ink-200">{unit}</span>}
-      </div>
-      {invalid && <p className="text-sm text-red-300">{t("play.notANumber")}</p>}
-      <button type="submit" className="btn-primary py-4 text-lg" disabled={!draft.trim()}>
-        {t("play.submit")}
-      </button>
-    </form>
-  );
-}
-
-/** "Sanne koos B" — who in the team set the current answer. */
-function ChosenBy({ view }: { view: TeamView }) {
-  const { t } = useTranslation();
-  const a = view.answer;
-  if (!a) return null;
-  const isMe = a.byPlayerId === view.me.playerId;
-  const name = isMe ? t("play.you") : (a.byNickname ?? t("play.someone"));
-  let label = String(a.value);
-  if (view.item?.kind === "question" && view.item.answerType === "multiple_choice" && typeof a.value === "number") {
-    label = OPTION_LETTERS[a.value] ?? label;
-  } else if (typeof a.value === "boolean") {
-    label = a.value ? t("play.true") : t("play.false");
-  }
-  const sentence = t("play.chose", { name });
-  return (
-    <p className="text-center text-ink-200" data-testid="play-chosen-by">
-      {sentence.charAt(0).toLocaleUpperCase() + sentence.slice(1)} <strong className="text-white">{label}</strong>
-    </p>
   );
 }
 
@@ -364,7 +185,12 @@ function Result({ view }: { view: TeamView }) {
         </p>
         {r && r.points > 0 && <p className="mt-2 text-2xl font-bold">{t("play.pointsEarned", { points: formatScore(r.points, i18n.language) })}</p>}
       </div>
-      <TeamAvatar team={view.team} size={140} rounded="rounded-3xl" />
+      {view.answer && view.item?.kind === "question" && (
+        <div className="w-full">
+          <TeamDecision item={view.item} view={view} />
+        </div>
+      )}
+      <TeamAvatar team={view.team} size={120} rounded="rounded-3xl" />
       <div className="grid w-full grid-cols-2 gap-3 text-center">
         <div className="card p-4">
           <p className="text-sm text-ink-400">{t("play.score")}</p>

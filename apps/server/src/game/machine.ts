@@ -9,7 +9,7 @@ import {
   type RunItem,
   type TeamRec,
 } from "@kwistig/shared";
-import { judge } from "./scoring.js";
+import { judge, resolveVotes } from "./scoring.js";
 
 /**
  * The game state machine: a pure reducer. No I/O, no clocks other than ctx.now,
@@ -27,7 +27,8 @@ export class GameError extends Error {
 
 export type MachineIntent =
   | Exclude<HostIntent, { type: "startQuiz" }>
-  | { type: "setAnswer"; teamId: number; playerId: number; value: AnswerValue }
+  | { type: "vote"; teamId: number; playerId: number; value: AnswerValue }
+  | { type: "retractVote"; teamId: number; playerId: number }
   | { type: "addTeam"; team: TeamRec }
   | { type: "addPlayer"; player: PlayerRec }
   | { type: "setPhoto"; teamId: number; photo: string }
@@ -36,6 +37,8 @@ export type MachineIntent =
 export interface Ctx {
   now: number;
   run: readonly RunItem[];
+  /** Used to break tied team votes; tests pass a fixed sequence. */
+  random: () => number;
 }
 
 /** Timers are checked against server receive time with this much slack. */
@@ -88,27 +91,36 @@ function team(s: GameState, id: number): TeamRec {
   return s.teams.find((t) => t.id === id) ?? fail("unknown_team");
 }
 
-function lockRun(run: ItemRun, ri: RunItem) {
+/** Closes answering: votes become one answer per team, which is then judged. */
+function lockRun(run: ItemRun, ri: RunItem, ctx: Ctx) {
   run.step = "locked";
   run.timer = null;
-  run.answers = judge(ri, run.answers);
+  run.votes ??= {};
+  run.answers = judge(ri, resolveVotes(ri, run, ctx.random));
+}
+
+/** Drops a phone's votes (it left the team or the game). */
+function dropVotes(s: GameState, playerId: number) {
+  for (const run of Object.values(s.items)) {
+    for (const teamVotes of Object.values(run.votes ?? {})) delete teamVotes[playerId];
+  }
 }
 
 /** Leaves the current item (locking it if teams were answering) and enters `cursor`. */
 function enter(s: GameState, cursor: number, ctx: Ctx) {
   const cur = currentRun(s);
   const curRi = ctx.run[s.cursor];
-  if (cur && curRi && cur.step === "answering") lockRun(cur, curRi);
+  if (cur && curRi && cur.step === "answering") lockRun(cur, curRi, ctx);
   s.phase = "item";
   s.cursor = cursor;
-  s.items[cursor] ??= { step: "shown", answers: {}, timer: null };
+  s.items[cursor] ??= { step: "shown", votes: {}, answers: {}, timer: null };
   s.overlay.scoreboard = false;
 }
 
 function finish(s: GameState, ctx: Ctx) {
   const cur = currentRun(s);
   const curRi = ctx.run[s.cursor];
-  if (cur && curRi && cur.step === "answering") lockRun(cur, curRi);
+  if (cur && curRi && cur.step === "answering") lockRun(cur, curRi, ctx);
   s.phase = "finished";
   s.overlay.scoreboard = false;
 }
@@ -195,14 +207,14 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
     case "lock": {
       const { ri, run } = requireQuestion(s, ctx);
       if (run.step !== "answering") fail("not_answering");
-      lockRun(run, ri);
+      lockRun(run, ri, ctx);
       return;
     }
 
     case "reveal": {
       const { ri, run } = requireQuestion(s, ctx);
       if (run.step === "revealed") return;
-      if (run.step === "answering" || run.step === "shown") lockRun(run, ri);
+      if (run.step === "answering" || run.step === "shown") lockRun(run, ri, ctx);
       run.step = "revealed";
       return;
     }
@@ -237,7 +249,7 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       const ri = ctx.run[s.cursor];
       if (!run || !ri || run.step !== "answering" || !run.timer) return;
       if (now + TIMER_SLACK_MS < run.timer.endsAt) return;
-      if (s.autoLock) lockRun(run, ri);
+      if (s.autoLock) lockRun(run, ri, ctx);
       return;
     }
 
@@ -246,19 +258,23 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       return;
 
     // ---------------------------------------------------------- answers
-    case "setAnswer": {
+    case "vote":
+    case "retractVote": {
       team(s, intent.teamId);
       const { ri, run } = requireQuestion(s, ctx);
       if (run.step === "locked" || run.step === "revealed") fail("locked");
       if (run.step !== "answering") fail("not_answering");
       if (run.timer && now > run.timer.endsAt + TIMER_SLACK_MS) fail("locked");
+      run.votes ??= {};
+      const teamVotes = (run.votes[intent.teamId] ??= {});
+      if (intent.type === "retractVote") {
+        delete teamVotes[intent.playerId];
+        return;
+      }
       if (!validAnswer(ri, intent.value)) fail("invalid_answer");
-      run.answers[intent.teamId] = {
+      teamVotes[intent.playerId] = {
         value: typeof intent.value === "string" ? intent.value.trim() : intent.value,
-        playerId: intent.playerId,
         at: now,
-        verdict: "pending",
-        points: 0,
       };
       return;
     }
@@ -330,9 +346,13 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       team(s, intent.intoId);
       for (const p of s.players) if (p.teamId === intent.fromId) p.teamId = intent.intoId;
       // The target team keeps its own answers; it inherits the other's where it had none.
+      // Votes from both teams now count together.
       for (const run of Object.values(s.items)) {
         const from = run.answers[intent.fromId];
         if (from && !run.answers[intent.intoId]) run.answers[intent.intoId] = from;
+        run.votes ??= {};
+        const fromVotes = run.votes[intent.fromId];
+        if (fromVotes) run.votes[intent.intoId] = { ...fromVotes, ...run.votes[intent.intoId] };
       }
       s.adjustments[intent.intoId] = (s.adjustments[intent.intoId] ?? 0) + (s.adjustments[intent.fromId] ?? 0);
       removeTeam(s, intent.fromId);
@@ -342,6 +362,8 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
     case "movePlayer": {
       const p = s.players.find((x) => x.id === intent.playerId) ?? fail("unknown_player");
       team(s, intent.teamId);
+      // A moved phone's votes are dropped; answers its old team already locked stay.
+      if (p.teamId !== intent.teamId) dropVotes(s, p.id);
       p.teamId = intent.teamId;
       return;
     }
@@ -350,6 +372,7 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       const i = s.players.findIndex((x) => x.id === intent.playerId);
       if (i < 0) fail("unknown_player");
       s.players.splice(i, 1);
+      dropVotes(s, intent.playerId);
       return;
     }
   }
@@ -359,5 +382,8 @@ function removeTeam(s: GameState, teamId: number) {
   s.teams = s.teams.filter((t) => t.id !== teamId);
   s.players = s.players.filter((p) => p.teamId !== teamId);
   delete s.adjustments[teamId];
-  for (const run of Object.values(s.items)) delete run.answers[teamId];
+  for (const run of Object.values(s.items)) {
+    delete run.answers[teamId];
+    if (run.votes) delete run.votes[teamId];
+  }
 }

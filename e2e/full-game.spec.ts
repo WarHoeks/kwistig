@@ -42,9 +42,15 @@ test("full game: TV, host and two teams", async ({ browser }) => {
   const imported = await host.request.post("/api/quizzes/import", { data: quiz });
   expect(imported.status()).toBe(201);
   await host.reload();
+  // On a repeated run a game is already going: confirm stopping it.
+  host.on("dialog", (d) => void d.accept());
+  const quizzesTab = host.getByRole("button", { name: "Quizzen" });
+  await expect(quizzesTab.or(host.getByRole("button", { name: "Start" })).first()).toBeVisible();
+  if (await quizzesTab.isVisible()) await quizzesTab.click();
   await host
     .getByRole("listitem")
     .filter({ hasText: "Huiskamerquiz: tien vragen" })
+    .first()
     .getByRole("button", { name: "Start" })
     .click();
   await expect(host.getByText("Teams melden zich aan")).toBeVisible();
@@ -122,20 +128,25 @@ test("full game: TV, host and two teams", async ({ browser }) => {
   await expect(tv.getByText("regeringszetel")).toHaveCount(0);
 
   await host.getByRole("button", { name: /Open de vraag/ }).click();
-  await sanne.getByRole("button", { name: /Rotterdam/ }).click();
-  // Shared team answer: Jip sees Sanne's pick, changes it, Sanne sees that within a second.
-  await expect(jip.getByTestId("play-chosen-by")).toHaveText("Sanne koos A", { timeout: 1000 });
-  await jip.getByRole("button", { name: /Amsterdam/ }).click();
-  await expect(sanne.getByTestId("play-chosen-by")).toHaveText("Jip koos C", { timeout: 1000 });
-  await expect(sanne.getByRole("button", { name: /Amsterdam/ })).toHaveAttribute("aria-pressed", "true");
-  await kim.getByRole("button", { name: /Den Haag/ }).click();
+  // Team voting: each phone votes; teammates see who voted for what within a second.
+  await sanne.getByTestId("vote-option-0").click(); // Rotterdam
+  await expect(jip.getByTestId("vote-option-0")).toContainText("Sanne", { timeout: 1000 });
+  await jip.getByTestId("vote-option-2").click(); // Amsterdam
+  await expect(sanne.getByTestId("vote-option-2")).toContainText("Jip", { timeout: 1000 });
+  await expect(sanne.getByTestId("vote-status")).toContainText("Gelijke stand");
+  await expect(host.getByTestId("host-tally").first()).toContainText("(1)");
+  await sanne.getByTestId("vote-option-2").click(); // Sanne is convinced: 2–0
+  await expect(jip.getByTestId("vote-option-2")).toContainText("Sanne");
+  await expect(jip.getByTestId("vote-status")).not.toContainText("Gelijke stand");
+  await kim.getByTestId("vote-option-1").click(); // Den Haag
   await expect(tv.locator("[data-state=in]")).toHaveCount(2);
   await shot(tv, "04-tv-question");
-  await shot(jip, "05-phone-answer");
+  await shot(jip, "05-phone-vote");
   await shot(host, "06-host-answering");
 
   await host.getByRole("button", { name: /Antwoorden sluiten/ }).click();
-  await expect(sanne.getByTestId("play-locked")).toBeVisible();
+  await expect(sanne.getByTestId("play-team-answer")).toHaveText(/Amsterdam/);
+  await expect(sanne.getByTestId("play-locked")).toContainText("2 van 2 stemmen");
   await host.getByRole("button", { name: /Toon antwoord/ }).click();
   await expect(sanne.getByTestId("play-result")).toHaveAttribute("data-verdict", "correct");
   await expect(kim.getByTestId("play-result")).toHaveAttribute("data-verdict", "wrong");
@@ -150,26 +161,34 @@ test("full game: TV, host and two teams", async ({ browser }) => {
   await expect(sanne.getByTestId("play-result")).toHaveAttribute("data-verdict", "correct");
   await expect(sanne.getByTestId("play-score")).toHaveText("1");
 
-  // ---------------------------------------------------------------- Q2 true/false: reveal straight from answering
+  // ---------------------------------------------------------------- Q2 true/false: a 1–1 tie is drawn
   await host.getByRole("button", { name: "Volgende →" }).first().click();
   await host.getByRole("button", { name: /Open de vraag/ }).click();
-  await kim.getByRole("button", { name: "A Waar" }).click();
-  await expect(host.getByText("1 van 2 teams geantwoord")).toBeVisible();
+  await expect(host.getByText("0 van 2 teams geantwoord")).toBeVisible();
+  await sanne.getByTestId("vote-option-0").click(); // Waar
+  await jip.getByTestId("vote-option-1").click(); // Niet waar
+  await kim.getByTestId("vote-option-0").click();
+  await expect(host.getByText("2 van 2 teams geantwoord")).toBeVisible();
   await host.getByRole("button", { name: /Antwoorden sluiten/ }).click();
+  await expect(jip.getByTestId("play-locked")).toContainText("Geloot uit een gelijke stand");
+  await expect(host.getByTestId(/host-answer-/).filter({ hasText: "De Bollen" }).getByText("geloot")).toBeVisible();
   await host.getByRole("button", { name: /Toon antwoord/ }).click();
   await expect(kim.getByTestId("play-result")).toHaveAttribute("data-verdict", "correct");
-  await expect(jip.getByTestId("play-result")).toHaveAttribute("data-verdict", "none");
+  await expect(jip.getByTestId("play-result")).toHaveAttribute("data-verdict", /correct|wrong/);
   await expect(tv.getByText("De Afsluitdijk is 32 kilometer lang.")).toBeVisible();
 
-  // ---------------------------------------------------------------- Q3 open: fuzzy match, host overrides
+  // ---------------------------------------------------------------- Q3 open: propose, vote along, fuzzy match, host overrides
   await host.getByRole("button", { name: "Volgende →" }).first().click();
   await host.getByRole("button", { name: /Open de vraag/ }).click();
   await expect(jip.getByText("In welke stad staat de Domtoren?")).toBeVisible();
-  await jip.getByPlaceholder("Typ jullie antwoord").fill("utreht");
-  await jip.getByRole("button", { name: "Insturen" }).click();
-  await expect(sanne.getByTestId("play-answer")).toHaveText("utreht");
-  await kim.getByPlaceholder("Typ jullie antwoord").fill("Amersfoort");
-  await kim.getByRole("button", { name: "Insturen" }).click();
+  await jip.getByPlaceholder("Typ een antwoord").fill("utreht");
+  await jip.getByPlaceholder("Typ een antwoord").press("Enter");
+  // Jip's proposal shows up on Sanne's phone; she votes for it with one tap.
+  await sanne.getByTestId("proposals").getByRole("button", { name: /utreht/ }).click();
+  await expect(jip.getByTestId("proposals").getByRole("button", { name: /utreht/ })).toContainText("2");
+  await shot(sanne, "07b-phone-proposals");
+  await kim.getByPlaceholder("Typ een antwoord").fill("Amersfoort");
+  await kim.getByRole("button", { name: "Stem" }).click();
   await host.getByRole("button", { name: /Antwoorden sluiten/ }).click();
   const bollenRow = host.getByTestId(/host-answer-/).filter({ hasText: "De Bollen" });
   await expect(bollenRow.getByText("bijna")).toBeVisible();
@@ -202,7 +221,7 @@ test("full game: TV, host and two teams", async ({ browser }) => {
     .filter({ has: host.getByRole("button", { name: "Quizzers", exact: true }) })
     .getByRole("button", { name: "+1", exact: true })
     .click();
-  await expect(kim.getByText("2,5 · #1")).toBeVisible();
+  await expect(kim.getByText(/^2,5 · #\d/)).toBeVisible(); // rank depends on the Q2 draw
   await host.getByRole("button", { name: "Spel" }).click();
 
   // ---------------------------------------------------------------- jump to the last item, then finish

@@ -48,7 +48,10 @@ export const AnswerInput = z.union([
 ]);
 
 export const TeamIntent = z.discriminatedUnion("type", [
-  z.strictObject({ type: z.literal("setAnswer"), value: AnswerInput }),
+  /** Vote for an option, or propose a new open/number answer and vote for it. */
+  z.strictObject({ type: z.literal("vote"), value: AnswerInput }),
+  /** Take this phone's vote back. */
+  z.strictObject({ type: z.literal("retractVote") }),
 ]);
 export type TeamIntent = z.infer<typeof TeamIntent>;
 

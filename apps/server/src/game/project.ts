@@ -1,5 +1,8 @@
 import {
   questionCount,
+  type BallotOption,
+  type ItemRun,
+  type Vote,
   type CommonView,
   type GameState,
   type HostView,
@@ -11,7 +14,7 @@ import {
   type TeamView,
   type TvView,
 } from "@kwistig/shared";
-import { computeRanks, computeScores, correctValue } from "./scoring.js";
+import { computeRanks, computeScores, correctValue, tally } from "./scoring.js";
 
 /**
  * Per-role projections of the game state. TV and team views are built from an
@@ -98,7 +101,7 @@ function common(s: GameState, run: readonly RunItem[], now: number): CommonView 
     timer: ir?.step === "answering" ? ir.timer : null,
     reveal: ri ? revealInfo(s, ri) : null,
     overlay: s.overlay,
-    answered: ir ? Object.keys(ir.answers).map(Number) : [],
+    answered: ir ? answeredTeams(ir) : [],
     totalItems: run.length,
   };
 }
@@ -114,8 +117,9 @@ export function teamView(s: GameState, run: readonly RunItem[], now: number, pla
   const team = c.teams.find((t) => t.id === me.teamId);
   if (!team) return null;
   const ir = s.phase === "item" ? s.items[s.cursor] : undefined;
+  const ri = s.phase === "item" ? run[s.cursor] : undefined;
   const a = ir?.answers[me.teamId];
-  const by = a ? s.players.find((p) => p.id === a.playerId) : undefined;
+  const decided = ir?.step === "locked" || ir?.step === "revealed";
   return {
     ...c,
     me: { playerId: me.id, nickname: me.nickname, teamId: me.teamId },
@@ -123,9 +127,27 @@ export function teamView(s: GameState, run: readonly RunItem[], now: number, pla
       ...team,
       players: s.players.filter((p) => p.teamId === me.teamId).map((p) => ({ id: p.id, nickname: p.nickname })),
     },
-    answer: a ? { value: a.value, byPlayerId: a.playerId, byNickname: by?.nickname ?? null, at: a.at } : null,
+    ballot: ri && ir ? ballot(s, ri, ir.votes?.[me.teamId]) : [],
+    myVote: ir?.votes?.[me.teamId]?.[me.id]?.value ?? null,
+    answer: a && decided ? { value: a.value, votes: a.votes, totalVotes: a.totalVotes, tieBreak: a.tieBreak } : null,
     result: ir?.step === "revealed" ? { verdict: a?.verdict ?? "wrong", points: a?.points ?? 0 } : null,
   };
+}
+
+/** Teams with at least one vote, or an answer, on this item. */
+function answeredTeams(ir: ItemRun): number[] {
+  const ids = new Set(Object.keys(ir.answers).map(Number));
+  for (const [teamId, v] of Object.entries(ir.votes ?? {})) if (Object.keys(v).length > 0) ids.add(Number(teamId));
+  return [...ids];
+}
+
+/** A team's votes as options with voter names. Only ever sent to that team and the host. */
+function ballot(s: GameState, ri: RunItem, teamVotes: Record<string, Vote> | undefined): BallotOption[] {
+  return tally(ri, teamVotes).map((g) => ({
+    value: g.value,
+    count: g.count,
+    voters: g.voters.map((id) => ({ id, nickname: s.players.find((p) => p.id === id)?.nickname ?? null })),
+  }));
 }
 
 function label(item: Item) {
@@ -156,12 +178,18 @@ export function hostView(
       step: s.items[r.cursor]?.step ?? null,
     })),
     answers:
-      s.phase === "item" && ir
+      s.phase === "item" && ir && ir.step !== "answering"
         ? Object.entries(ir.answers).map(([teamId, a]) => ({
             ...a,
             teamId: Number(teamId),
             byNickname: s.players.find((p) => p.id === a.playerId)?.nickname ?? null,
           }))
+        : [],
+    ballots:
+      s.phase === "item" && ri && ir
+        ? Object.entries(ir.votes ?? {})
+            .map(([teamId, v]) => ({ teamId: Number(teamId), options: ballot(s, ri, v) }))
+            .filter((b) => b.options.length > 0)
         : [],
     reveal: fullReveal,
     correct: s.phase === "item" && ri ? correctValue(ri) : null,

@@ -6,3 +6,4 @@ export * from "./matching.js";
 export * from "./run.js";
 export * from "./state.js";
 export * from "./protocol.js";
+export * from "./votes.js";

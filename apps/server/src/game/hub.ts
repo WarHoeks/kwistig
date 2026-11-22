@@ -153,7 +153,12 @@ export function attachHub(app: FastifyInstance, runner: GameRunner) {
       if (!parsed.success) throw new GameError("invalid_answer");
       const p = data.token ? runner.findPlayerByToken(data.token) : undefined;
       if (!p) throw new GameError("unknown_player");
-      runner.dispatch({ type: "setAnswer", teamId: p.teamId, playerId: p.id, value: parsed.data.value });
+      const intent = parsed.data;
+      runner.dispatch(
+        intent.type === "vote"
+          ? { type: "vote", teamId: p.teamId, playerId: p.id, value: intent.value }
+          : { type: "retractVote", teamId: p.teamId, playerId: p.id },
+      );
       return;
     }
     throw new GameError("forbidden");
