@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -99,6 +100,22 @@ describe("media store and import", () => {
     await expect(safeFetch("http://[::ffff:127.0.0.1]:8080/")).rejects.toThrow("private_address");
     await expect(safeFetch("http://user:pass@example.com/")).rejects.toThrow("unsupported_url");
     await expect(safeFetch("file:///etc/passwd")).rejects.toThrow("unsupported_url");
+  });
+
+  it("gives up at the total deadline even if the server keeps dripping bytes", async () => {
+    const server = http.createServer((_req, res) => {
+      res.writeHead(200, { "content-type": "text/html" });
+      const drip = setInterval(() => res.write("."), 100);
+      res.on("close", () => clearInterval(drip));
+    });
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+    const { port } = server.address() as { port: number };
+    const started = Date.now();
+    // request() is the transport under safeFetch; a literal IP skips the guarded lookup.
+    await expect(fetchInternals.request(new URL(`http://127.0.0.1:${port}/`), "*/*", 1_000_000, Date.now() + 500)).rejects.toThrow("timeout");
+    expect(Date.now() - started).toBeLessThan(1500);
+    server.closeAllConnections();
+    await new Promise((r) => server.close(r));
   });
 
   it("checks names inside the connection's own lookup, so rebinding can't swap the address", async () => {

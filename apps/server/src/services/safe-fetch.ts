@@ -102,23 +102,40 @@ interface Raw {
 function request(url: URL, accept: string, maxBytes: number, deadline: number): Promise<Raw> {
   return new Promise((resolve, reject) => {
     const lib = url.protocol === "https:" ? https : http;
+    let settled = false;
+    // A hard deadline for the whole request: the socket "timeout" option only
+    // fires when the connection is idle, so a slow drip could last forever.
+    const timer = setTimeout(() => fail(new FetchError("timeout")), Math.max(1, deadline - Date.now()));
+    const done = (r: Raw) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(r);
+    };
+    const fail = (e: FetchError) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      req.destroy();
+      reject(e);
+    };
     const req = lib.request(
       url,
       {
         method: "GET",
         lookup: guardedLookup,
         headers: { accept, "accept-encoding": "identity", "user-agent": "Kwistig/0.1 (self-hosted quiz app)" },
-        timeout: Math.max(1, deadline - Date.now()),
       },
       (res) => {
         const status = res.statusCode ?? 0;
         if (status >= 300 && status < 400) {
-          res.resume();
-          return resolve({ status, headers: res.headers, body: Buffer.alloc(0) });
+          // Don't read redirect bodies at all.
+          res.destroy();
+          return done({ status, headers: res.headers, body: Buffer.alloc(0) });
         }
         if (Number(res.headers["content-length"] ?? 0) > maxBytes) {
           res.destroy();
-          return reject(new FetchError("too_large"));
+          return fail(new FetchError("too_large"));
         }
         const chunks: Buffer[] = [];
         let size = 0;
@@ -126,15 +143,15 @@ function request(url: URL, accept: string, maxBytes: number, deadline: number): 
           size += c.length;
           if (size > maxBytes) {
             res.destroy();
-            reject(new FetchError("too_large"));
+            fail(new FetchError("too_large"));
           } else chunks.push(c);
         });
-        res.on("end", () => resolve({ status, headers: res.headers, body: Buffer.concat(chunks) }));
-        res.on("error", () => reject(new FetchError("fetch_failed")));
+        res.on("end", () => done({ status, headers: res.headers, body: Buffer.concat(chunks) }));
+        res.on("error", () => fail(new FetchError("fetch_failed")));
+        res.on("aborted", () => fail(new FetchError("fetch_failed")));
       },
     );
-    req.on("timeout", () => req.destroy(new FetchError("timeout")));
-    req.on("error", (e) => reject(e instanceof FetchError ? e : new FetchError("fetch_failed")));
+    req.on("error", (e) => fail(e instanceof FetchError ? e : new FetchError("fetch_failed")));
     req.end();
   });
 }
@@ -168,4 +185,4 @@ export async function safeFetch(
   throw new FetchError("too_many_redirects");
 }
 
-export const _test = { isPublicIp, guardedLookup };
+export const _test = { isPublicIp, guardedLookup, request };
