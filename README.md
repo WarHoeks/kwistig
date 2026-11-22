@@ -2,7 +2,7 @@
 
 *De huiskamerquiz.* A self-hosted living-room pub quiz: the TV shows the questions, teams answer on their phones, and the quizmaster runs it all from their own phone. See [docs/PLAN.md](docs/PLAN.md) for the full design.
 
-**Status:** Phases 1–4 are built: admin editor, the live game with team voting, images with reveal effects, YouTube clips, news headlines, flitsreeks, quiz packages, backups and Spotify. Spotify is tested against a fake Spotify; the live check with a real app is still to do. The buzzer arrives in Phase 5; until then buzzer questions show their text only.
+**Status:** Phases 1–4 are done: admin editor, the live game with team voting, images with reveal effects, YouTube clips with continuations, news headlines, flitsreeks, quiz packages, backups and Spotify (verified with a real Development Mode app). The buzzer, standings effects and the print view arrive in Phase 5; until then buzzer questions show their text only.
 
 ## A quiz night
 
