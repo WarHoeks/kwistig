@@ -8,6 +8,7 @@ import { Field, LocalizedInput, OptionalNumber, setOpt } from "./fields";
 import { IssueList } from "./IssueList";
 import { ItemEditor } from "./ItemEditor";
 import { SpotifyImportButton } from "./SpotifyImport";
+import { TvPreview } from "./TvPreview";
 
 type Selection = { type: "quiz" } | { type: "round"; r: number } | { type: "item"; r: number; i: number };
 type Loaded = QuizDoc & { id: number; uid: string };
@@ -415,6 +416,7 @@ export function QuizEditor() {
 
           {sel.type === "item" && selectedRound && selectedItem && (
             <div className="space-y-6">
+              <TvPreview item={selectedItem} round={selectedRound} quizTitle={doc.title} quizLang={lang} />
               <ItemEditor
                 key={`${sel.r}-${sel.i}-${selKey}`}
                 item={selectedItem}

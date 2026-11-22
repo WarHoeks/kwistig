@@ -1,4 +1,5 @@
 import {
+  correctValue,
   matchAnswer,
   voteKey,
   type AnswerRec,
@@ -83,24 +84,7 @@ export function pointsFor(verdict: Verdict, itemPoints: number): number {
   return 0;
 }
 
-/** The correct answer as shown at reveal and to the host. */
-export function correctValue(run: RunItem): AnswerValue | null {
-  const item = run.item;
-  if (item.kind !== "question") return null;
-  switch (item.answerType) {
-    case "multiple_choice":
-    case "true_false":
-    case "number":
-      return item.correct;
-    case "open":
-      return item.acceptedAnswers[0] ?? null;
-    case "rapid_sequence":
-      // One character per image: "1" = yes (press), "0" = no.
-      return item.images.map((img) => (img.yes ? "1" : "0")).join("");
-    case "buzzer":
-      return null;
-  }
-}
+export { correctValue };
 
 /**
  * Judges every answer of a question at lock time. Manual verdicts from the host

@@ -9,7 +9,8 @@
 1. On the laptop, open **`http://localhost:8080/tv`** in Chrome, sign in with the PIN once, and put it on the TV (see [step 4](#4-the-tv-page-and-youtube-sign-in) for why `localhost`).
 2. On your phone, open `http://<laptop-ip>:8080/host`, sign in, and start a quiz. The TV shows a QR code.
 3. Teams scan the QR code, create a team or join one, and take a team photo when you start the photo step.
-4. Drive the game from your phone: open, close, reveal, next. Refreshing any device puts it back where it was, and so does restarting the container.
+4. Drive the game from your phone: open, close, reveal, next. A clip that goes with a question starts together with the answers and the timer; a clip set to play first opens the question, with its timer, when it ends. Refreshing any device puts it back where it was, and so does restarting the container.
+5. Afterwards, **Admin → Sessies** keeps every quiz night's final standings; delete a session there to remove its team photos too.
 
 ## Run it
 
@@ -37,7 +38,7 @@ Set `EXTERNAL_FETCH=false` to stop Kwistig from fetching anything from the inter
 
 ### 1. Host PIN
 
-Change `HOST_PIN` in `docker-compose.yml` before the first quiz night, to something of at least 6 characters: guests on your Wi-Fi can reach the login page, and wrong attempts are only rate-limited per device. It protects `/admin`, `/host` and the TV. A PIN saved later in admin settings overrides the environment value, and changing the PIN signs out every device.
+Change the PIN before the first quiz night, to something of at least 6 characters: guests on your Wi-Fi can reach the login page, and wrong attempts are only rate-limited per device. It protects `/admin`, `/host` and the TV. Either set `HOST_PIN` in `docker-compose.yml`, or change it under **Admin → Instellingen → Pincode** (needs the current PIN). A PIN saved in admin overrides `HOST_PIN`; *Terug naar HOST_PIN* removes it again. Changing the PIN signs out every other device.
 
 ### 2. Firewall
 
@@ -64,7 +65,7 @@ Open the TV page **in Chrome on the laptop itself**, at **`http://localhost:8080
 
 **Use `localhost`, not `127.0.0.1` or the LAN IP.** Many music videos (record-label uploads) refuse to play in embeds on a page whose address is a bare IP, with YouTube error 150, while the same page via a host name plays fine. Tested in Chrome: the official "Never Gonna Give You Up" video fails on `http://127.0.0.1:8080` and `http://192.168.1.x:8080` and plays on `http://localhost:8080`. `localhost` is still a secure context, so Spotify's player works there too. The TV shows a banner with a one-click switch when it's opened via an IP address during a YouTube question.
 
-Kwistig doesn't log in to YouTube. The embedded player uses whatever Google account is signed in to that browser profile, so signing the laptop's Chrome into a YouTube Premium account removes ads in the embeds. Some videos don't allow embedding at all; the editor checks every YouTube link (via YouTube's oEmbed) and flags those. If Chrome blocks autoplay after the TV page reloads, the TV shows "Klik om af te spelen": click it once on the laptop.
+Kwistig doesn't log in to YouTube. The embedded player uses whatever Google account is signed in to that browser profile, so signing the laptop's Chrome into a YouTube Premium account removes ads in the embeds. Run **Admin → Instellingen → YouTube-test** in that Chrome before guests arrive: it plays a music video the way the TV does, and if an ad plays first, that profile isn't signed in with Premium (a page can't detect ads itself, so this is a visual check). Some videos don't allow embedding at all; the editor checks every YouTube link (via YouTube's oEmbed) and flags those. If Chrome blocks autoplay after the TV page reloads, the TV shows "Klik om af te spelen": click it once on the laptop.
 
 **Playing a clip:** the host's phone has play/pause, replay (from the start marker) and mute. A clip set to *Eerst afspelen* fills the TV until it ends; then the question appears.
 

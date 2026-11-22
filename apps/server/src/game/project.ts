@@ -1,9 +1,8 @@
 import {
-  blankHeadline,
   mediaUrl,
+  publicItem,
+  publicMedia,
   questionCount,
-  youTubeId,
-  type Media,
   type PublicMedia,
   type BallotOption,
   type ItemRun,
@@ -20,6 +19,8 @@ import {
   type TvView,
 } from "@kwistig/shared";
 import { computeRanks, computeScores, correctValue, tally } from "./scoring.js";
+
+export { publicItem, publicMedia };
 
 /**
  * Per-role projections of the game state. TV and team views are built from an
@@ -43,83 +44,6 @@ export function publicTeams(s: GameState): PublicTeam[] {
     score: scores.get(t.id) ?? 0,
     rank: ranks.get(t.id) ?? 1,
   }));
-}
-
-/**
- * Media as the TV may see it. News headlines are blanked here; the blanked word
- * and Spotify track details never leave the server before reveal.
- */
-export function publicMedia(m: Media, news: GameState["news"]): PublicMedia {
-  const play = m.play ?? "with";
-  switch (m.type) {
-    case "image":
-      return { type: "image", src: mediaUrl(m.src), reveal: m.reveal ?? "none", play };
-    case "youtube":
-      return {
-        type: "youtube",
-        videoId: youTubeId(m.videoId),
-        ...(m.startSec !== undefined ? { startSec: m.startSec } : {}),
-        ...(m.endSec !== undefined ? { endSec: m.endSec } : {}),
-        hideVideo: m.hideVideo ?? false,
-        play,
-      };
-    case "spotify":
-      return {
-        type: "spotify",
-        ...(m.startSec !== undefined ? { startSec: m.startSec } : {}),
-        ...(m.endSec !== undefined ? { endSec: m.endSec } : {}),
-        play,
-      };
-    case "news": {
-      const info = news?.[m.url];
-      return {
-        type: "news",
-        headline: info?.headline ? blankHeadline(info.headline, m.blankWord) : null,
-        image: info?.image ? mediaUrl(info.image) : null,
-        play,
-      };
-    }
-  }
-}
-
-export function publicItem(ri: RunItem, qCount: number, news: GameState["news"] = {}): PublicItem {
-  const base = { cursor: ri.cursor, roundIndex: ri.roundIndex, roundTitle: ri.roundTitle };
-  const item = ri.item;
-  if (item.kind === "slide") {
-    const bg = item.background;
-    return {
-      kind: "slide",
-      ...base,
-      title: item.title,
-      ...(item.body !== undefined ? { body: item.body } : {}),
-      ...(bg !== undefined ? { background: "image" in bg ? { image: mediaUrl(bg.image) } : bg } : {}),
-      ...(item.media !== undefined ? { media: publicMedia(item.media, news) } : {}),
-      show: item.show ?? "content",
-      ...(item.countdownSec !== undefined ? { countdownSec: item.countdownSec } : {}),
-    };
-  }
-  return {
-    kind: "question",
-    ...base,
-    questionNumber: ri.questionNumber ?? 0,
-    questionCount: qCount,
-    answerType: item.answerType,
-    prompt: item.prompt,
-    ...(item.answerType === "multiple_choice" ? { options: item.options } : {}),
-    ...(item.answerType === "number" && item.unit !== undefined ? { unit: item.unit } : {}),
-    points: ri.points,
-    ...(ri.timeLimitSec !== undefined ? { timeLimitSec: ri.timeLimitSec } : {}),
-    ...(item.answerType !== "rapid_sequence" && item.media ? { media: publicMedia(item.media, news) } : {}),
-    ...(item.answerType === "rapid_sequence"
-      ? {
-          sequence: {
-            images: item.images.map((img) => mediaUrl(img.src)),
-            secondsPerImage: item.secondsPerImage ?? 5,
-            buttonLabel: item.buttonLabel,
-          },
-        }
-      : {}),
-  };
 }
 
 export function revealInfo(s: GameState, ri: RunItem): RevealInfo | null {

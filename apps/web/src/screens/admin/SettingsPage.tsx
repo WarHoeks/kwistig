@@ -4,6 +4,8 @@ import type { Language, Settings } from "@kwistig/shared";
 import { api, errorKey, RequestError } from "../../lib/api";
 import { IssueList } from "./IssueList";
 import { SpotifySettings } from "./SpotifySettings";
+import { PinSettings } from "./PinSettings";
+import { YouTubeTest } from "./YouTubeTest";
 
 const isLoopback = (h: string) => h === "localhost" || h.startsWith("127.") || h === "[::1]";
 
@@ -97,7 +99,11 @@ export function SettingsPage() {
         </select>
       </div>
 
+      <PinSettings />
+
       <SpotifySettings />
+
+      <YouTubeTest />
 
       <div className="card space-y-2 p-5">
         <p className="label">{t("settings.backup")}</p>

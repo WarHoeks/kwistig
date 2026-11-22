@@ -34,7 +34,8 @@
     "pin_required": "Log opnieuw in met de pincode.",
     "quiz_not_found": "Deze quiz bestaat niet (meer).",
     "invalid_quiz": "De quiz is niet geldig. Los deze punten op:",
-    "invalid_json": "Dit is geen geldig JSON-bestand."
+    "invalid_json": "Dit is geen geldig JSON-bestand.",
+    "session_active": "Deze sessie loopt nog. Beëindig de quiz eerst."
   },
   "auth": {
     "title": "Quizmaster",
@@ -196,7 +197,10 @@
     "revealWith": "Samen met het antwoord",
     "revealBefore": "Vóór het antwoord (na het sluiten)",
     "spotifyBadLink": "Dit is geen link naar een Spotify-nummer.",
-    "endAfterTrack": "Het einde ligt na het einde van het nummer."
+    "endAfterTrack": "Het einde ligt na het einde van het nummer.",
+    "preview": "Zo ziet de tv het",
+    "previewQuestion": "Vraag",
+    "previewAnswer": "Antwoord"
   },
   "game": {
     "errors": {
@@ -558,5 +562,37 @@
       "spotify_player_unsupported": "Deze browser kan Spotify niet afspelen (DRM). Gebruik Chrome op de laptop.",
       "spotify_sdk_unavailable": "De Spotify-speler kon niet laden."
     }
+  },
+  "pin": {
+    "title": "Pincode van de quizmaster",
+    "sourceSaved": "Er geldt een pincode die hier is ingesteld (in plaats van HOST_PIN).",
+    "sourceEnv": "Nu geldt HOST_PIN uit docker-compose.yml.",
+    "current": "Huidige pincode",
+    "next": "Nieuwe pincode",
+    "repeat": "Nieuwe pincode nog een keer",
+    "hint": "Minstens 6 tekens. Alle andere apparaten (tv, quizmaster-telefoon) moeten daarna opnieuw inloggen; deze browser blijft ingelogd.",
+    "change": "Pincode wijzigen",
+    "confirm": "Pincode wijzigen? De tv en andere telefoons worden uitgelogd.",
+    "reset": "Terug naar HOST_PIN",
+    "resetConfirm": "De hier ingestelde pincode weghalen en HOST_PIN uit docker-compose.yml weer gebruiken? Andere apparaten worden uitgelogd.",
+    "done": "Opgeslagen.",
+    "mismatch": "De nieuwe pincodes zijn niet gelijk."
+  },
+  "sessions": {
+    "title": "Sessies",
+    "empty": "Nog geen gespeelde quizzen.",
+    "running": "Loopt nu",
+    "noTeams": "Geen teams.",
+    "confirmDelete": "De sessie van “{{title}}” verwijderen, met de stand en alle teamfoto's?"
+  },
+  "ytTest": {
+    "title": "YouTube-test",
+    "hint": "Doe deze test in de Chrome waarin je de tv-pagina opent, vóór de gasten komen. Hij speelt een muziekvideo zoals de tv dat doet.",
+    "run": "Test afspelen",
+    "playing": "YouTube speelt op dit adres.",
+    "blocked": "Deze video mag hier niet worden ingesloten.",
+    "blockedIp": "Geweigerd omdat de pagina via een IP-adres is geopend. Gebruik http://localhost:8080.",
+    "failed": "YouTube gaf fout {{code}}.",
+    "adHint": "Zag je eerst een advertentie? Dan is deze Chrome niet ingelogd met YouTube Premium. Log in op youtube.com in dit Chrome-profiel en test opnieuw."
   }
 }

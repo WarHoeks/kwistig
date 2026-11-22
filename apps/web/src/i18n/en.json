@@ -34,7 +34,8 @@
     "pin_required": "Please sign in again with the PIN.",
     "quiz_not_found": "This quiz no longer exists.",
     "invalid_quiz": "The quiz is not valid. Fix these points:",
-    "invalid_json": "This is not a valid JSON file."
+    "invalid_json": "This is not a valid JSON file.",
+    "session_active": "This session is still running. End the quiz first."
   },
   "auth": {
     "title": "Quizmaster",
@@ -196,7 +197,10 @@
     "revealWith": "Together with the answer",
     "revealBefore": "Before the answer (after closing)",
     "spotifyBadLink": "This isn't a link to a Spotify track.",
-    "endAfterTrack": "The end is after the end of the track."
+    "endAfterTrack": "The end is after the end of the track.",
+    "preview": "What the TV shows",
+    "previewQuestion": "Question",
+    "previewAnswer": "Answer"
   },
   "game": {
     "errors": {
@@ -558,5 +562,37 @@
       "spotify_player_unsupported": "This browser can't play Spotify (DRM). Use Chrome on the laptop.",
       "spotify_sdk_unavailable": "The Spotify player couldn't load."
     }
+  },
+  "pin": {
+    "title": "Quizmaster PIN",
+    "sourceSaved": "A PIN set here is in use (instead of HOST_PIN).",
+    "sourceEnv": "HOST_PIN from docker-compose.yml is in use.",
+    "current": "Current PIN",
+    "next": "New PIN",
+    "repeat": "New PIN again",
+    "hint": "At least 6 characters. All other devices (TV, quizmaster phone) then have to sign in again; this browser stays signed in.",
+    "change": "Change PIN",
+    "confirm": "Change the PIN? The TV and other phones will be signed out.",
+    "reset": "Back to HOST_PIN",
+    "resetConfirm": "Remove the PIN set here and use HOST_PIN from docker-compose.yml again? Other devices will be signed out.",
+    "done": "Saved.",
+    "mismatch": "The new PINs don't match."
+  },
+  "sessions": {
+    "title": "Sessions",
+    "empty": "No quizzes played yet.",
+    "running": "Running now",
+    "noTeams": "No teams.",
+    "confirmDelete": "Delete the session of “{{title}}”, with its standings and all team photos?"
+  },
+  "ytTest": {
+    "title": "YouTube test",
+    "hint": "Run this in the Chrome you open the TV page in, before guests arrive. It plays a music video the way the TV does.",
+    "run": "Play test",
+    "playing": "YouTube plays on this address.",
+    "blocked": "This video may not be embedded here.",
+    "blockedIp": "Refused because the page was opened via an IP address. Use http://localhost:8080.",
+    "failed": "YouTube returned error {{code}}.",
+    "adHint": "Did an ad play first? Then this Chrome isn't signed in with YouTube Premium. Sign in on youtube.com in this Chrome profile and test again."
   }
 }
