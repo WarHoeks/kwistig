@@ -41,6 +41,24 @@ describe("AttemptLimiter", () => {
     expect(l.blocked("2001:db8:1:2:0:0:0:ffff", 1)).toBe(true);
   });
 
+  it("parallel attempts from one client can't exceed the limit", async () => {
+    const l = new AttemptLimiter(10, 1000);
+    let checks = 0;
+    const results = await Promise.all(
+      Array.from({ length: 30 }, () =>
+        l.attempt("192.168.1.9", () => {
+          checks++;
+          return false;
+        }),
+      ),
+    );
+    // At most two in flight per client; the rest are refused without a check.
+    expect(checks).toBeLessThanOrEqual(10);
+    expect(results.filter((r) => r === "blocked").length).toBeGreaterThanOrEqual(20);
+    for (let i = 0; i < 20; i++) await l.attempt("192.168.1.9", () => (checks++, false));
+    expect(checks).toBe(10);
+  });
+
   it("global failures slow attempts down but never block another client", () => {
     const l = new AttemptLimiter(10, 50);
     for (let i = 0; i < 50; i++) l.fail(`10.0.0.${i}`, 0);
