@@ -20,6 +20,8 @@ interface SocketData {
   role: Role;
   token?: string;
   playerId?: number;
+  /** TV only: the Spotify device id its Web Playback SDK player reported. */
+  spotifyDevice?: string;
 }
 
 /**
@@ -111,6 +113,11 @@ export function attachHub(app: FastifyInstance, runner: GameRunner) {
         sendHost();
       });
     } else {
+      if (data.role === "tv") {
+        socket.on("disconnect", () => {
+          if (data.spotifyDevice && app.spotify.tvDevice?.id === data.spotifyDevice) app.spotify.tvDevice = null;
+        });
+      }
       void socket.join(data.role);
       const s = runner.state;
       const now = Date.now();
@@ -170,7 +177,16 @@ export function attachHub(app: FastifyInstance, runner: GameRunner) {
     if (data.role === "tv") {
       const parsed = TvIntent.safeParse(raw);
       if (!parsed.success) throw new GameError("invalid_intent");
-      runner.dispatch(parsed.data);
+      const intent = parsed.data;
+      if (intent.type === "spotifyDevice") {
+        // Not game state: which Spotify device the TV page's player is, while it's open.
+        data.spotifyDevice = intent.deviceId ?? undefined;
+        app.spotify.tvDevice = intent.deviceId ? { id: intent.deviceId, name: "Kwistig TV" } : null;
+        if (intent.error) app.log.warn({ error: intent.error }, "TV Spotify player error");
+        sendHost();
+        return;
+      }
+      runner.dispatch(intent);
       return;
     }
     throw new GameError("forbidden");

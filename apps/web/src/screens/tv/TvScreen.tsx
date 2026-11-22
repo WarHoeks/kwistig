@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSpotifyTvPlayer } from "../../components/media/SpotifyTvPlayer";
 import { useTranslation } from "react-i18next";
 import { isIdle, type ServerView, type TvJoinInfo, type TvView } from "@kwistig/shared";
 import { PinGate } from "../../components/PinGate";
@@ -21,6 +22,17 @@ function TvLive() {
   const { view, connected, clockOffset, send } = useGameSocket<ServerView<TvView>>({ role: "tv" });
   const sendTv: SendTv = (intent) => void send(intent);
   const live = view && !isIdle(view) ? view : null;
+
+  // Spotify: this page is the "Kwistig TV" player. Its device id is re-sent after
+  // every reconnect, since the server only keeps it in memory.
+  const spotifyDevice = useRef<string | null>(null);
+  const spotify = useSpotifyTvPlayer(!!view, (deviceId, error) => {
+    spotifyDevice.current = deviceId;
+    void send({ type: "spotifyDevice", deviceId, ...(error ? { error } : {}) });
+  });
+  useEffect(() => {
+    if (connected && spotifyDevice.current) void send({ type: "spotifyDevice", deviceId: spotifyDevice.current });
+  }, [connected, send]);
   const text = useQuizText(live?.quizLang);
   const [join, setJoin] = useState<TvJoinInfo | null>(null);
 
@@ -65,6 +77,17 @@ function TvLive() {
     <Stage>
       {body}
       <IpAddressHint view={live} />
+      {/* Spotify needs one click on the TV page before it may play sound. */}
+      {spotify.state === "ready" && spotify.needsClick && (
+        <div className="absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full bg-black/80 px-8 py-3 text-[26px] text-gold-300">
+          {t("tv.spotifyClick")}
+        </div>
+      )}
+      {spotify.state === "error" && spotify.error && (
+        <div className="absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full bg-red-700/90 px-8 py-3 text-[26px] text-white">
+          {t(`spotify.errors.spotify_${spotify.error}`, { defaultValue: t("tv.mediaError") })}
+        </div>
+      )}
       {showScoreboard && (
         <div className="absolute inset-0 z-20 bg-ink-950/95">
           <Scoreboard view={live} />

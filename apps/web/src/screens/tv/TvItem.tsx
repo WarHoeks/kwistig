@@ -28,7 +28,21 @@ function MediaSlot({
   className: string;
   headline?: string;
 }) {
+  const { t } = useTranslation();
   const shown = media.type === "news" && headline ? { ...media, headline } : media;
+  if (media.type === "spotify") {
+    // Never any track info on the TV: just the equaliser, and a clear message on errors.
+    return (
+      <div className={`relative ${className}`} data-testid="tv-spotify" data-status={playback?.status ?? "idle"}>
+        <TvMediaPanel media={media} progress={progress} className="h-full w-full" />
+        {playback?.status === "error" && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-[32px] bg-black/85 px-16 text-center text-[44px] text-red-200">
+            {t(`spotify.errors.${playback.error}`, { defaultValue: t("tv.mediaError") })}
+          </div>
+        )}
+      </div>
+    );
+  }
   return (
     <TvMediaPanel
       media={shown}

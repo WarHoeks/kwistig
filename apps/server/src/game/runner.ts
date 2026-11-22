@@ -41,6 +41,23 @@ export class GameRunner {
     private readonly now: () => number = Date.now,
   ) {}
 
+  private readonly effects: ((state: GameState | null, run: readonly RunItem[]) => void)[] = [];
+
+  /** Side effects that follow committed state (e.g. Spotify playback). Run after broadcast. */
+  onCommit(fn: (state: GameState | null, run: readonly RunItem[]) => void) {
+    this.effects.push(fn);
+  }
+
+  private afterCommit() {
+    for (const fn of this.effects) {
+      try {
+        fn(this.state, this.run);
+      } catch (err) {
+        this.log.error({ err }, "post-commit effect failed");
+      }
+    }
+  }
+
   setListener(l: RunnerListener) {
     this.listener = l;
   }
@@ -100,6 +117,7 @@ export class GameRunner {
     this.syncTimer();
     if (oldPlayers.length) this.listener?.playersRemoved(oldPlayers, "session_ended");
     this.listener?.changed();
+    this.afterCommit();
   }
 
   /** Applies one intent: reduce → persist → broadcast. Throws GameError on rejection. */
@@ -127,6 +145,7 @@ export class GameRunner {
     const removed = [...before].filter((id) => !after.has(id));
     if (removed.length) this.listener?.playersRemoved(removed, "removed");
     this.listener?.changed();
+    this.afterCommit();
     return next;
   }
 
@@ -141,6 +160,7 @@ export class GameRunner {
     this.syncTimer();
     this.listener?.playersRemoved(players, "session_ended");
     this.listener?.changed();
+    this.afterCommit();
   }
 
   private endInTx(tx: Db, s: GameState) {
