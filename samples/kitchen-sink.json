@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "title": { "nl": "Kwistig proefquiz", "en": "Kwistig sample quiz" },
+  "language": "nl",
+  "description": "Elk antwoordtype en elk mediatype één keer, voor tests en demo's.",
+  "rounds": [
+    {
+      "title": "Ronde 1: Algemeen",
+      "defaults": { "points": 1, "timeLimitSec": 30 },
+      "items": [
+        {
+          "kind": "slide",
+          "title": "Ronde 1: Algemeen",
+          "body": "Kies het juiste antwoord op je telefoon. **Eén** antwoord per team.",
+          "background": { "color": "#1e3a8a" }
+        },
+        {
+          "kind": "question",
+          "answerType": "multiple_choice",
+          "prompt": { "nl": "Wat is de hoofdstad van Australië?", "en": "What is the capital of Australia?" },
+          "options": ["Sydney", "Melbourne", "Canberra", "Perth"],
+          "correct": 2,
+          "explanation": "Canberra werd in 1913 gekozen als compromis tussen Sydney en Melbourne.",
+          "hostNotes": "Veel mensen zeggen Sydney."
+        },
+        {
+          "kind": "question",
+          "answerType": "true_false",
+          "prompt": "Een octopus heeft drie harten.",
+          "correct": true,
+          "points": 2
+        },
+        {
+          "kind": "question",
+          "answerType": "open",
+          "prompt": "Welke schilder sneed een stuk van zijn eigen oor af?",
+          "acceptedAnswers": ["Vincent van Gogh", "Van Gogh"],
+          "media": { "type": "image", "src": "media/zelfportret.png", "reveal": "blur", "play": "with" }
+        },
+        {
+          "kind": "question",
+          "answerType": "number",
+          "prompt": "Hoeveel treden heeft deze trap?",
+          "correct": 128,
+          "unit": "treden",
+          "scoring": { "mode": "closest" },
+          "media": { "type": "image", "src": "media/trap.png", "reveal": "zoom" },
+          "hostNotes": "Bron: gemeentearchief"
+        },
+        {
+          "kind": "question",
+          "answerType": "number",
+          "prompt": "In welk jaar viel de Berlijnse Muur?",
+          "correct": 1989,
+          "scoring": { "mode": "tolerance", "tolerance": 1 },
+          "timeLimitSec": 20
+        }
+      ]
+    },
+    {
+      "title": "Ronde 2: Media",
+      "defaults": { "points": 1, "timeLimitSec": 45 },
+      "items": [
+        {
+          "kind": "slide",
+          "title": "Ronde 2: Muziek en beeld",
+          "body": "Luister en kijk goed.",
+          "background": { "image": "media/podium.png" }
+        },
+        {
+          "kind": "question",
+          "answerType": "multiple_choice",
+          "prompt": { "nl": "Wat gebeurt er hierna?", "en": "What happens next?" },
+          "options": ["Hij valt", "Hij springt", "Hij danst", "Hij rent weg"],
+          "correct": 2,
+          "media": { "type": "youtube", "videoId": "dQw4w9WgXcQ", "startSec": 43, "endSec": 53, "play": "before" }
+        },
+        {
+          "kind": "question",
+          "answerType": "open",
+          "prompt": "Wie zingt dit?",
+          "acceptedAnswers": ["Rick Astley"],
+          "media": { "type": "youtube", "videoId": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "startSec": 0, "endSec": 15, "hideVideo": true },
+          "revealMedia": { "type": "youtube", "videoId": "dQw4w9WgXcQ", "startSec": 43, "endSec": 60 }
+        },
+        {
+          "kind": "question",
+          "answerType": "open",
+          "prompt": "Wie is de artiest?",
+          "acceptedAnswers": ["Carly Rae Jepsen"],
+          "media": { "type": "spotify", "uri": "spotify:track:11dFghVXANMlKmJXsNCbNl", "startSec": 42, "endSec": 62, "play": "before" }
+        },
+        {
+          "kind": "question",
+          "answerType": "multiple_choice",
+          "prompt": "Welk woord ontbreekt in deze kop?",
+          "options": ["kat", "hond", "koe"],
+          "correct": 1,
+          "media": { "type": "news", "url": "https://nos.nl/artikel/2500000-voorbeeld", "blankWord": "hond" }
+        },
+        {
+          "kind": "slide",
+          "title": "Pauze",
+          "body": "Tijd voor een drankje!",
+          "countdownSec": 600
+        },
+        {
+          "kind": "slide",
+          "title": "Tussenstand",
+          "show": "scoreboard"
+        }
+      ]
+    },
+    {
+      "title": { "nl": "Ronde 3: Snel", "en": "Round 3: Fast" },
+      "items": [
+        {
+          "kind": "question",
+          "answerType": "buzzer",
+          "prompt": "Noem de langste rivier van Europa.",
+          "answer": { "nl": "De Wolga", "en": "The Volga" },
+          "points": 3
+        },
+        {
+          "kind": "question",
+          "answerType": "rapid_sequence",
+          "prompt": "Winnaar of verliezer? Druk op WINNAAR bij een winnaar.",
+          "buttonLabel": { "nl": "WINNAAR!", "en": "WINNER!" },
+          "secondsPerImage": 3,
+          "graceMs": 300,
+          "scoring": { "pointsPerImage": 1, "speedBonus": true, "wrongPressPenalty": 0 },
+          "images": [
+            { "src": "media/persoon1.png", "yes": true, "caption": "Won het EK" },
+            { "src": "media/persoon2.png", "yes": false, "caption": "Degradeerde" },
+            { "src": "media/persoon3.png", "yes": true },
+            { "src": "media/persoon4.png", "yes": false },
+            { "src": "media/persoon5.png", "yes": true, "caption": { "nl": "Wereldkampioen", "en": "World champion" } }
+          ]
+        },
+        {
+          "kind": "slide",
+          "title": "En de winnaar is...",
+          "show": "scoreboard"
+        }
+      ]
+    }
+  ]
+}
