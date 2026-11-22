@@ -24,6 +24,25 @@ export const QuizSummary = z.object({
 });
 export type QuizSummary = z.infer<typeof QuizSummary>;
 
+export const Settings = z.object({
+  /** Join URL base saved in admin; wins over PUBLIC_BASE_URL. */
+  joinBaseUrl: z.string().nullable(),
+  envBaseUrl: z.string().nullable(),
+  defaultLocale: Language,
+  quickMessages: z.array(z.string()),
+});
+export type Settings = z.infer<typeof Settings>;
+
+export const SettingsPatch = z.strictObject({
+  joinBaseUrl: z
+    .url({ protocol: /^https?$/, error: "must be an http(s) URL such as http://192.168.1.23:8080" })
+    .max(200)
+    .nullable()
+    .optional(),
+  defaultLocale: Language.optional(),
+  quickMessages: z.array(z.string().trim().min(1).max(280)).max(20).optional(),
+});
+
 /** Error body for every 4xx. `issues` is set for validation failures. */
 export interface ApiError {
   error: string;

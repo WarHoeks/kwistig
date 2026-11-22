@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "title": "Huiskamerquiz: tien vragen",
+  "language": "nl",
+  "description": "Tien tekstvragen voor een eerste avond met Kwistig.",
+  "rounds": [
+    {
+      "title": "Ronde 1: Nederland",
+      "defaults": { "points": 1, "timeLimitSec": 30 },
+      "items": [
+        {
+          "kind": "slide",
+          "title": "Ronde 1: Nederland",
+          "body": "Vijf vragen over ons eigen land. Overleg en kies samen **één** antwoord."
+        },
+        {
+          "kind": "question",
+          "answerType": "multiple_choice",
+          "prompt": "Wat is de hoofdstad van Nederland?",
+          "options": ["Rotterdam", "Den Haag", "Amsterdam", "Utrecht"],
+          "correct": 2,
+          "hostNotes": "Den Haag is de regeringszetel, niet de hoofdstad."
+        },
+        {
+          "kind": "question",
+          "answerType": "true_false",
+          "prompt": "De Afsluitdijk is langer dan 30 kilometer.",
+          "correct": true,
+          "explanation": "De Afsluitdijk is 32 kilometer lang."
+        },
+        {
+          "kind": "question",
+          "answerType": "open",
+          "prompt": "In welke stad staat de Domtoren?",
+          "acceptedAnswers": ["Utrecht"]
+        },
+        {
+          "kind": "question",
+          "answerType": "number",
+          "prompt": "Hoeveel provincies heeft Nederland?",
+          "correct": 12,
+          "scoring": { "mode": "closest" }
+        },
+        {
+          "kind": "question",
+          "answerType": "multiple_choice",
+          "prompt": "Welke rivier stroomt door Arnhem?",
+          "options": ["Maas", "Nederrijn", "IJssel"],
+          "correct": 1
+        }
+      ]
+    },
+    {
+      "title": "Ronde 2: Wereld",
+      "defaults": { "points": 1, "timeLimitSec": 30 },
+      "items": [
+        {
+          "kind": "slide",
+          "title": "Ronde 2: De wereld",
+          "body": "Nog vijf vragen. Daarna de einduitslag!"
+        },
+        {
+          "kind": "question",
+          "answerType": "open",
+          "prompt": "Welke schilder maakte De Nachtwacht?",
+          "acceptedAnswers": ["Rembrandt", "Rembrandt van Rijn"]
+        },
+        {
+          "kind": "question",
+          "answerType": "true_false",
+          "prompt": "Australië is groter dan Europa.",
+          "correct": false,
+          "explanation": "Europa is ongeveer 10,2 miljoen km², Australië 7,7 miljoen km²."
+        },
+        {
+          "kind": "question",
+          "answerType": "number",
+          "prompt": "In welk jaar landde de eerste mens op de maan?",
+          "correct": 1969,
+          "scoring": { "mode": "tolerance", "tolerance": 1 },
+          "points": 2
+        },
+        {
+          "kind": "question",
+          "answerType": "multiple_choice",
+          "prompt": { "nl": "Wat is het grootste zoogdier ter wereld?", "en": "What is the largest mammal in the world?" },
+          "options": [
+            { "nl": "Afrikaanse olifant", "en": "African elephant" },
+            { "nl": "Blauwe vinvis", "en": "Blue whale" },
+            { "nl": "Giraf", "en": "Giraffe" },
+            { "nl": "Potvis", "en": "Sperm whale" }
+          ],
+          "correct": 1
+        },
+        {
+          "kind": "question",
+          "answerType": "open",
+          "prompt": "Wat is de hoofdstad van Canada?",
+          "acceptedAnswers": ["Ottawa"],
+          "hostNotes": "Niet Toronto!"
+        },
+        {
+          "kind": "slide",
+          "title": "En de winnaar is...",
+          "show": "scoreboard"
+        }
+      ]
+    }
+  ]
+}

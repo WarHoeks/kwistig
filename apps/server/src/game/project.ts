@@ -1,0 +1,177 @@
+import {
+  questionCount,
+  type CommonView,
+  type GameState,
+  type HostView,
+  type Item,
+  type PublicItem,
+  type PublicTeam,
+  type RevealInfo,
+  type RunItem,
+  type TeamView,
+  type TvView,
+} from "@kwistig/shared";
+import { computeRanks, computeScores, correctValue } from "./scoring.js";
+
+/**
+ * Per-role projections of the game state. TV and team views are built from an
+ * explicit whitelist of fields, so correct answers, accepted answers, host notes
+ * and explanations can only reach them through `revealInfo`, which is only
+ * called once the item is revealed.
+ */
+
+export const photoUrl = (sessionId: number, photo: string | null) =>
+  photo ? `/api/sessions/${sessionId}/photos/${photo}` : null;
+
+export function publicTeams(s: GameState): PublicTeam[] {
+  const scores = computeScores(s);
+  const ranks = computeRanks(scores);
+  return s.teams.map((t) => ({
+    id: t.id,
+    name: t.name,
+    emoji: t.emoji,
+    color: t.color,
+    photoUrl: photoUrl(s.sessionId, t.photo),
+    score: scores.get(t.id) ?? 0,
+    rank: ranks.get(t.id) ?? 1,
+  }));
+}
+
+export function publicItem(ri: RunItem, qCount: number): PublicItem {
+  const base = { cursor: ri.cursor, roundIndex: ri.roundIndex, roundTitle: ri.roundTitle };
+  const item = ri.item;
+  if (item.kind === "slide") {
+    return {
+      kind: "slide",
+      ...base,
+      title: item.title,
+      ...(item.body !== undefined ? { body: item.body } : {}),
+      ...(item.background !== undefined ? { background: item.background } : {}),
+      show: item.show ?? "content",
+      ...(item.countdownSec !== undefined ? { countdownSec: item.countdownSec } : {}),
+    };
+  }
+  return {
+    kind: "question",
+    ...base,
+    questionNumber: ri.questionNumber ?? 0,
+    questionCount: qCount,
+    answerType: item.answerType,
+    prompt: item.prompt,
+    ...(item.answerType === "multiple_choice" ? { options: item.options } : {}),
+    ...(item.answerType === "number" && item.unit !== undefined ? { unit: item.unit } : {}),
+    points: ri.points,
+    ...(ri.timeLimitSec !== undefined ? { timeLimitSec: ri.timeLimitSec } : {}),
+  };
+}
+
+export function revealInfo(s: GameState, ri: RunItem): RevealInfo | null {
+  const run = s.items[ri.cursor];
+  const item = ri.item;
+  if (!run || run.step !== "revealed" || item.kind !== "question") return null;
+  const correct = correctValue(ri);
+  if (correct === null) return null;
+  return {
+    correct,
+    ...(item.answerType === "open" ? { acceptedAnswers: item.acceptedAnswers } : {}),
+    ...(item.explanation !== undefined ? { explanation: item.explanation } : {}),
+    results: s.teams.map((t) => {
+      const a = run.answers[t.id];
+      return { teamId: t.id, value: a?.value ?? null, verdict: a?.verdict ?? "wrong", points: a?.points ?? 0 };
+    }),
+  };
+}
+
+function common(s: GameState, run: readonly RunItem[], now: number): CommonView {
+  const ri = s.phase === "item" ? run[s.cursor] : undefined;
+  const ir = ri ? s.items[ri.cursor] : undefined;
+  return {
+    serverNow: now,
+    phase: s.phase,
+    sessionId: s.sessionId,
+    joinCode: s.joinCode,
+    quizTitle: s.quizTitle,
+    quizLang: s.quizLang,
+    teams: publicTeams(s),
+    step: ir?.step ?? null,
+    item: ri ? publicItem(ri, questionCount(run)) : null,
+    timer: ir?.step === "answering" ? ir.timer : null,
+    reveal: ri ? revealInfo(s, ri) : null,
+    overlay: s.overlay,
+    answered: ir ? Object.keys(ir.answers).map(Number) : [],
+    totalItems: run.length,
+  };
+}
+
+export function tvView(s: GameState, run: readonly RunItem[], now: number): TvView {
+  return common(s, run, now);
+}
+
+export function teamView(s: GameState, run: readonly RunItem[], now: number, playerId: number): TeamView | null {
+  const me = s.players.find((p) => p.id === playerId);
+  if (!me) return null;
+  const c = common(s, run, now);
+  const team = c.teams.find((t) => t.id === me.teamId);
+  if (!team) return null;
+  const ir = s.phase === "item" ? s.items[s.cursor] : undefined;
+  const a = ir?.answers[me.teamId];
+  const by = a ? s.players.find((p) => p.id === a.playerId) : undefined;
+  return {
+    ...c,
+    me: { playerId: me.id, nickname: me.nickname, teamId: me.teamId },
+    team: {
+      ...team,
+      players: s.players.filter((p) => p.teamId === me.teamId).map((p) => ({ id: p.id, nickname: p.nickname })),
+    },
+    answer: a ? { value: a.value, byPlayerId: a.playerId, byNickname: by?.nickname ?? null, at: a.at } : null,
+    result: ir?.step === "revealed" ? { verdict: a?.verdict ?? "wrong", points: a?.points ?? 0 } : null,
+  };
+}
+
+function label(item: Item) {
+  return item.kind === "slide" ? item.title : item.prompt;
+}
+
+export function hostView(
+  s: GameState,
+  run: readonly RunItem[],
+  now: number,
+  online: ReadonlySet<number>,
+): HostView {
+  const c = common(s, run, now);
+  const ri = s.phase === "item" || s.phase === "finished" ? run[s.cursor] : undefined;
+  const ir = ri ? s.items[ri.cursor] : undefined;
+  const nextRi = s.phase === "item" ? run[s.cursor + 1] : s.phase === "photos" || s.phase === "lobby" ? run[0] : undefined;
+  const fullReveal = ri && s.phase === "item" ? revealInfo(s, ri) : null;
+  return {
+    ...c,
+    fullItem: s.phase === "item" && ri ? ri.item : null,
+    nextItem: nextRi ? { cursor: nextRi.cursor, item: nextRi.item } : null,
+    outline: run.map((r) => ({
+      cursor: r.cursor,
+      roundIndex: r.roundIndex,
+      kind: r.item.kind,
+      label: label(r.item),
+      ...(r.item.kind === "question" ? { answerType: r.item.answerType } : {}),
+      step: s.items[r.cursor]?.step ?? null,
+    })),
+    answers:
+      s.phase === "item" && ir
+        ? Object.entries(ir.answers).map(([teamId, a]) => ({
+            ...a,
+            teamId: Number(teamId),
+            byNickname: s.players.find((p) => p.id === a.playerId)?.nickname ?? null,
+          }))
+        : [],
+    reveal: fullReveal,
+    correct: s.phase === "item" && ri ? correctValue(ri) : null,
+    teamsDetail: c.teams.map((t) => ({
+      ...t,
+      adjustment: s.adjustments[t.id] ?? 0,
+      players: s.players
+        .filter((p) => p.teamId === t.id)
+        .map((p) => ({ id: p.id, nickname: p.nickname, online: online.has(p.id) })),
+    })),
+    autoLock: s.autoLock,
+  };
+}

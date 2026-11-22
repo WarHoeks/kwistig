@@ -10,12 +10,17 @@ import { HttpError, sendError } from "./http.js";
 import { authRoutes } from "./routes/auth.js";
 import { quizRoutes } from "./routes/quizzes.js";
 import { schemaRoutes } from "./routes/schema.js";
+import { playRoutes } from "./routes/play.js";
+import { settingsRoutes } from "./routes/settings.js";
+import { GameRunner } from "./game/runner.js";
+import { attachHub } from "./game/hub.js";
 
 declare module "fastify" {
   interface FastifyInstance {
     db: Db;
     auth: HostAuth;
     config: Config;
+    game: GameRunner;
   }
 }
 
@@ -37,6 +42,8 @@ export async function buildApp({ config, dbFile }: BuildOptions): Promise<Fastif
   app.decorate("db", db);
   app.decorate("auth", auth);
   app.decorate("config", config);
+  const runner = new GameRunner(db, config.DATA_DIR, app.log);
+  app.decorate("game", runner);
   app.addHook("onClose", async () => db.$client.close());
 
   await app.register(fastifyCookie, { secret: auth.cookieSecret() });
@@ -61,6 +68,11 @@ export async function buildApp({ config, dbFile }: BuildOptions): Promise<Fastif
   await app.register(authRoutes, { prefix: "/api/auth" });
   await app.register(schemaRoutes, { prefix: "/api/schema" });
   await app.register(quizRoutes, { prefix: "/api/quizzes" });
+  await app.register(settingsRoutes, { prefix: "/api/settings" });
+  await app.register(playRoutes, { prefix: "/api" });
+
+  attachHub(app, runner);
+  runner.resume();
 
   app.all("/api/*", async (_req, reply) => reply.status(404).send({ error: "not_found" }));
 

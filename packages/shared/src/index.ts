@@ -2,3 +2,7 @@ export * from "./quiz.js";
 export * from "./localized.js";
 export * from "./errors.js";
 export * from "./api.js";
+export * from "./matching.js";
+export * from "./run.js";
+export * from "./state.js";
+export * from "./protocol.js";
