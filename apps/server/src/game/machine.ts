@@ -148,6 +148,19 @@ function setPlayback(s: GameState, cursor: number, slot: MediaPlayback["slot"], 
   s.media = { cursor, slot, status: "idle", seq: (s.media?.seq ?? 0) + 1, muted: s.media?.muted ?? false };
 }
 
+/**
+ * Playing a clip that goes *with* the question (not "play first") on a question
+ * that isn't open yet opens it too: answers and the timer start with the clip.
+ */
+function openWithClip(s: GameState, ctx: Ctx) {
+  const run = currentRun(s);
+  const ri = ctx.run[s.cursor];
+  const q = ri?.item.kind === "question" ? ri.item : undefined;
+  if (s.media?.slot !== "question" || run?.step !== "shown" || !q || !isPlayable(q) || q.answerType === "rapid_sequence") return;
+  if (q.media?.play === "before") return;
+  apply(s, { type: "open" }, ctx);
+}
+
 function requireMedia(s: GameState): MediaPlayback {
   return s.phase === "item" && s.media?.cursor === s.cursor ? s.media : fail("no_media");
 }
@@ -323,6 +336,12 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       }
       if (q.answerType === "rapid_sequence") startSequence(run, q, now);
       else if (ri.timeLimitSec) startTimer(run, ri.timeLimitSec, now);
+      // A clip that goes with the question starts together with the answers and the timer.
+      const m = s.media;
+      if (m && m.cursor === s.cursor && m.slot === "question" && m.status === "idle" && q.answerType !== "rapid_sequence" && q.media?.play !== "before") {
+        m.seq += 1;
+        m.status = "playing";
+      }
       return;
     }
 
@@ -360,6 +379,7 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       if (m.status !== "paused") m.seq += 1; // (re)start from the start marker
       m.status = "playing";
       delete m.error;
+      openWithClip(s, ctx);
       return;
     }
 
@@ -368,6 +388,7 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       m.seq += 1;
       m.status = "playing";
       delete m.error;
+      openWithClip(s, ctx);
       return;
     }
 
@@ -384,7 +405,16 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
     case "mediaEnded": {
       // Reports for an older start (a replay already happened) are ignored.
       const m = s.media;
-      if (m && m.seq === intent.seq && m.status === "playing") m.status = "ended";
+      if (m && m.seq === intent.seq && m.status === "playing") {
+        m.status = "ended";
+        // "Play first": the question appears now, so answering and the timer start now.
+        const ri = ctx.run[s.cursor];
+        const run = currentRun(s);
+        const q = ri?.item.kind === "question" ? ri.item : undefined;
+        if (m.cursor === s.cursor && m.slot === "question" && run?.step === "shown" && q && isPlayable(q) && q.answerType !== "rapid_sequence" && q.media?.play === "before") {
+          apply(s, { type: "open" }, ctx);
+        }
+      }
       return;
     }
 

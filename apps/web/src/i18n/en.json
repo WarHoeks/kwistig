@@ -396,7 +396,8 @@
       "finish": "To the final standings",
       "playFirst": "Play the clip first",
       "startSequence": "Start the rapid sequence",
-      "playContinuation": "Play what happens next"
+      "playContinuation": "Play what happens next",
+      "openWithClip": "Start question and clip"
     },
     "photosMissing": "No photo yet: {{teams}}",
     "allPhotos": "Every team has a photo.",

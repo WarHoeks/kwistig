@@ -396,7 +396,8 @@
       "finish": "Naar de eindstand",
       "playFirst": "Speel eerst het fragment",
       "startSequence": "Start de flitsreeks",
-      "playContinuation": "Speel het vervolg"
+      "playContinuation": "Speel het vervolg",
+      "openWithClip": "Start vraag en fragment"
     },
     "photosMissing": "Nog geen foto: {{teams}}",
     "allPhotos": "Alle teams hebben een foto.",

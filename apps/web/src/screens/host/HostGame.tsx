@@ -278,9 +278,11 @@ function PrimaryAction({ view, playable }: { view: HostView; playable: boolean }
           </div>
         );
       }
+      // A clip that goes with the question starts together with it (and the timer).
+      const withClip = !!view.media && view.media.status === "idle" && fi?.kind === "question" && fi.answerType !== "rapid_sequence" && !!fi.media;
       return (
         <button type="button" className={big} onClick={() => void send({ type: "open" })}>
-          ▶ {rapid ? t("host.action.startSequence") : t("host.action.open")}
+          ▶ {rapid ? t("host.action.startSequence") : withClip ? t("host.action.openWithClip") : t("host.action.open")}
         </button>
       );
     }

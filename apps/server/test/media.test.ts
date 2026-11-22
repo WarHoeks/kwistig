@@ -209,6 +209,72 @@ describe("media playback", () => {
   });
 });
 
+describe("clip and timer start together", () => {
+  const setup = (play: "before" | "with") => {
+    const quiz = Quiz.parse({
+      version: 1,
+      title: "T",
+      language: "nl",
+      rounds: [
+        {
+          title: "R",
+          defaults: { timeLimitSec: 30 },
+          items: [
+            {
+              kind: "question",
+              answerType: "open",
+              prompt: "Wie zingt dit?",
+              acceptedAnswers: ["Rick Astley"],
+              media: { type: "youtube", videoId: "dQw4w9WgXcQ", startSec: 0, endSec: 15, play },
+            },
+          ],
+        },
+      ],
+    });
+    const run = buildRunOrder(quiz);
+    let s: GameState = initialState({ sessionId: 1, quizId: 1, joinCode: "ABCD", quizTitle: "T", quizLang: "nl" });
+    const go = (i: MachineIntent) => (s = reduce(s, i, { now: 1000, run, random: () => 0 }));
+    go({ type: "beginQuiz" });
+    return { go, get s() { return s; }, get run() { return s.items[0]!; } };
+  };
+
+  it("clip with the question: playing it opens the question and starts the timer", () => {
+    const g = setup("with");
+    g.go({ type: "mediaPlay" });
+    expect(g.run.step).toBe("answering");
+    expect(g.run.timer).toMatchObject({ endsAt: 31_000 });
+    expect(g.s.media).toMatchObject({ status: "playing" });
+  });
+
+  it("clip with the question: opening it starts the clip", () => {
+    const g = setup("with");
+    g.go({ type: "open" });
+    expect(g.s.media).toMatchObject({ status: "playing" });
+    expect(g.run.timer).not.toBeNull();
+  });
+
+  it("“play first”: the question opens, with its timer, when the clip ends", () => {
+    const g = setup("before");
+    g.go({ type: "mediaPlay" });
+    expect(g.run.step).toBe("shown"); // still watching
+    g.go({ type: "mediaEnded", seq: g.s.media!.seq });
+    expect(g.run.step).toBe("answering");
+    expect(g.run.timer).toMatchObject({ endsAt: 31_000 });
+  });
+
+  it("“play first”: opening early keeps the clip playing", () => {
+    const g = setup("before");
+    g.go({ type: "mediaPlay" });
+    const seq = g.s.media!.seq;
+    g.go({ type: "open" });
+    expect(g.run.step).toBe("answering");
+    expect(g.s.media).toMatchObject({ status: "playing", seq });
+    // Its end no longer re-opens anything.
+    g.go({ type: "mediaEnded", seq });
+    expect(g.run.step).toBe("answering");
+  });
+});
+
 describe("continuation clip (what happens next)", () => {
   const quizWith = (play: "before" | "with" | undefined) =>
     Quiz.parse({
