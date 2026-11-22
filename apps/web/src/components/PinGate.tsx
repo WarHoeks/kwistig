@@ -5,16 +5,24 @@ import { api, errorKey } from "../lib/api";
 import { LanguageToggle } from "./LanguageToggle";
 
 /** Shows a PIN form until the host cookie is set, then renders children. */
-export function PinGate({ children }: { children: (logout: () => void) => ReactNode }) {
+export function PinGate({
+  children,
+}: {
+  children: (logout: () => void, info: { defaultPin: boolean }) => ReactNode;
+}) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<"checking" | "in" | "out">("checking");
+  const [defaultPin, setDefaultPin] = useState(false);
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     api<AuthStatus>("/auth/status")
-      .then((s) => setStatus(s.authenticated ? "in" : "out"))
+      .then((s) => {
+        setDefaultPin(!!s.defaultPin);
+        setStatus(s.authenticated ? "in" : "out");
+      })
       .catch(() => setStatus("out"));
   }, []);
 
@@ -23,7 +31,8 @@ export function PinGate({ children }: { children: (logout: () => void) => ReactN
     setBusy(true);
     setError(undefined);
     try {
-      await api<AuthStatus>("/auth/login", { method: "POST", body: { pin } });
+      const s = await api<AuthStatus>("/auth/login", { method: "POST", body: { pin } });
+      setDefaultPin(!!s.defaultPin);
       setPin("");
       setStatus("in");
     } catch (err) {
@@ -40,7 +49,7 @@ export function PinGate({ children }: { children: (logout: () => void) => ReactN
   if (status === "checking") {
     return <p className="p-8 text-center text-ink-400">{t("common.loading")}</p>;
   }
-  if (status === "in") return <>{children(logout)}</>;
+  if (status === "in") return <>{children(logout, { defaultPin })}</>;
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">

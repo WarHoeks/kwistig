@@ -38,4 +38,6 @@ export interface HealthResponse {
 
 export interface AuthStatus {
   authenticated: boolean;
+  /** True while the PIN is still the shipped "change-me". */
+  defaultPin?: boolean;
 }

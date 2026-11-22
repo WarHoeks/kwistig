@@ -52,7 +52,8 @@
     "confirmDelete": "Permanently delete quiz “{{title}}”?",
     "stats": "{{rounds}} rounds · {{items}} items",
     "updated": "Updated {{date}}",
-    "schemaLink": "JSON Schema for import"
+    "schemaLink": "JSON Schema for import",
+    "defaultPinWarning": "The PIN is still “change-me”, so anyone on your Wi-Fi can become quizmaster. Set HOST_PIN in docker-compose.yml."
   },
   "editor": {
     "quizTitle": "Title",

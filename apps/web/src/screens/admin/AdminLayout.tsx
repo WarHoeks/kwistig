@@ -7,8 +7,13 @@ export function AdminLayout() {
   const { t } = useTranslation();
   return (
     <PinGate>
-      {(logout) => (
+      {(logout, { defaultPin }) => (
         <div className="min-h-screen">
+          {defaultPin && (
+            <p role="alert" className="bg-red-600 px-4 py-2 text-center text-sm font-semibold text-white">
+              {t("admin.defaultPinWarning")}
+            </p>
+          )}
           <header className="sticky top-0 z-20 border-b border-ink-800 bg-ink-950/90 backdrop-blur">
             <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
               <Link to="/admin" className="flex items-baseline gap-2">

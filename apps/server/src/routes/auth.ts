@@ -13,14 +13,20 @@ export function requireHost(app: FastifyInstance) {
 export async function authRoutes(app: FastifyInstance) {
   const limiter = new AttemptLimiter();
 
-  app.get("/status", async (req): Promise<AuthStatus> => ({ authenticated: app.auth.isHost(req) }));
+  app.get("/status", async (req): Promise<AuthStatus> => {
+    const authenticated = app.auth.isHost(req);
+    return { authenticated, ...(authenticated ? { defaultPin: app.auth.usingDefaultPin() } : {}) };
+  });
 
   app.post("/login", async (req, reply) => {
-    if (!limiter.allow(req.ip)) throw new HttpError(429, "too_many_attempts");
+    if (limiter.blocked(req.ip)) throw new HttpError(429, "too_many_attempts");
     const { pin } = parse(LoginBody, req.body);
-    if (!app.auth.verify(pin)) throw new HttpError(401, "wrong_pin");
+    if (!app.auth.verify(pin)) {
+      limiter.fail(req.ip);
+      throw new HttpError(401, "wrong_pin");
+    }
     app.auth.signIn(reply);
-    return { authenticated: true } satisfies AuthStatus;
+    return { authenticated: true, defaultPin: app.auth.usingDefaultPin() } satisfies AuthStatus;
   });
 
   app.post("/logout", async (_req, reply) => {

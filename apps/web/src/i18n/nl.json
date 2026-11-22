@@ -52,7 +52,8 @@
     "confirmDelete": "Quiz “{{title}}” definitief verwijderen?",
     "stats": "{{rounds}} rondes · {{items}} onderdelen",
     "updated": "Bijgewerkt {{date}}",
-    "schemaLink": "JSON Schema voor import"
+    "schemaLink": "JSON Schema voor import",
+    "defaultPinWarning": "De pincode is nog “change-me”. Iedereen op je wifi kan dan quizmaster worden. Zet HOST_PIN in docker-compose.yml."
   },
   "editor": {
     "quizTitle": "Titel",
