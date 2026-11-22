@@ -57,6 +57,9 @@ function HostLive() {
           )}
           {!game.connected && <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold">{t("play.offline")}</span>}
           <LanguageToggle className="ml-auto" />
+          <a href="/admin" className="rounded-lg bg-ink-800 px-2.5 py-1 text-sm font-semibold text-ink-200 hover:text-white" title={t("host.toAdmin")}>
+            ⚙ {t("host.admin")}
+          </a>
         </header>
 
         <main className="flex-1 px-4 pb-28 pt-4">

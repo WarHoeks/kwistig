@@ -21,6 +21,9 @@ export function AdminLayout() {
                 <span className="text-sm text-ink-400">{t("admin.title")}</span>
               </Link>
               <div className="ml-auto flex items-center gap-3">
+                <Link to="/host" className="text-sm text-ink-200 hover:text-white">
+                  {t("host.title")}
+                </Link>
                 <Link to="/admin/settings" className="text-sm text-ink-200 hover:text-white">
                   {t("settings.title")}
                 </Link>
