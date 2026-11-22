@@ -31,6 +31,7 @@ export default defineConfig({
       PUBLIC_BASE_URL: `http://127.0.0.1:${PORT}`,
       DATA_DIR: path.join(os.tmpdir(), `kwistig-e2e-${Date.now()}`),
       LOG_LEVEL: "warn",
+      EXTERNAL_FETCH: "false",
     },
   },
 });

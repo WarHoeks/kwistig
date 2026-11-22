@@ -18,7 +18,10 @@
     "unsavedChanges": "Niet-opgeslagen wijzigingen",
     "confirmLeave": "Je hebt niet-opgeslagen wijzigingen. Toch weggaan?",
     "language": "Taal",
-    "languages": { "nl": "Nederlands", "en": "Engels" },
+    "languages": {
+      "nl": "Nederlands",
+      "en": "Engels"
+    },
     "comingSoon": "Dit scherm komt in een volgende fase."
   },
   "errors": {
@@ -78,7 +81,10 @@
     "translation": "Vertaling ({{lang}})",
     "addTranslation": "+ {{lang}}",
     "removeTranslation": "Vertaling weghalen",
-    "kind": { "slide": "Dia", "question": "Vraag" },
+    "kind": {
+      "slide": "Dia",
+      "question": "Vraag"
+    },
     "answerTypes": {
       "multiple_choice": "Meerkeuze",
       "true_false": "Waar / niet waar",
@@ -114,11 +120,76 @@
     "slideShowScoreboard": "Tussenstand",
     "background": "Achtergrondkleur",
     "countdown": "Aftellen (s)",
-    "hasMedia": "Met media: {{type}}",
     "jsonOnly": "Dit type kun je in deze versie alleen als JSON bewerken.",
     "jsonEditor": "JSON",
     "jsonInvalid": "Ongeldige JSON",
-    "untitled": "(zonder titel)"
+    "untitled": "(zonder titel)",
+    "media": "Media bij de vraag",
+    "revealMedia": "Media bij het antwoord",
+    "mediaType": "Soort",
+    "mediaNone": "Geen",
+    "mediaTypes": {
+      "image": "Afbeelding",
+      "youtube": "YouTube",
+      "spotify": "Spotify",
+      "news": "Nieuwsbericht"
+    },
+    "mediaPlay": "Wanneer",
+    "playWith": "Samen met de vraag",
+    "playBefore": "Eerst afspelen, dan de vraag",
+    "revealEffect": "Onthul-effect",
+    "reveal": {
+      "none": "Geen",
+      "pixelate": "Van korrelig naar scherp",
+      "zoom": "Van ingezoomd naar geheel",
+      "blur": "Van wazig naar scherp"
+    },
+    "spotifyUri": "Spotify-nummer (link of URI)",
+    "spotifyLater": "Spotify afspelen komt in fase 4.",
+    "startSec": "Begin (s)",
+    "endSec": "Einde (s)",
+    "youtubeUrl": "YouTube-link of video-ID",
+    "youtubeChecking": "Controleren…",
+    "youtubeErrors": {
+      "embed_blocked": "Deze video mag niet buiten YouTube worden afgespeeld. Kies een andere.",
+      "not_found": "Deze video bestaat niet.",
+      "unreachable": "YouTube was niet bereikbaar om te controleren.",
+      "invalid_id": "Dit is geen geldige YouTube-link."
+    },
+    "hideVideo": "Alleen geluid (beeld verbergen)",
+    "testClip": "Fragment testen",
+    "newsUrl": "Link naar het artikel",
+    "fetchNews": "Ophalen",
+    "blankWord": "Woord om weg te laten uit de kop",
+    "noHeadline": "(geen kop gevonden)",
+    "uploadImage": "Afbeelding kiezen",
+    "replaceImage": "Vervangen",
+    "imageUrlPlaceholder": "of plak een afbeeldingslink",
+    "mediaMissing": "Dit bestand ontbreekt.",
+    "mediaWarnings": "Opgeslagen, maar let op:",
+    "mediaErrors": {
+      "upload_failed": "Uploaden is mislukt.",
+      "unsupported_image": "Alleen PNG, JPEG, GIF en WebP.",
+      "too_large": "Het bestand is te groot.",
+      "missing_media": "bestand ontbreekt",
+      "offline": "internet ophalen staat uit",
+      "private_address": "adres in het lokale netwerk is niet toegestaan",
+      "unsupported_url": "link wordt niet ondersteund",
+      "host_not_found": "website niet gevonden",
+      "timeout": "duurde te lang",
+      "fetch_failed": "ophalen mislukt",
+      "no_headline": "geen kop gevonden"
+    },
+    "backgroundImage": "Achtergrondafbeelding",
+    "buttonLabel": "Tekst op de knop",
+    "secondsPerImage": "Seconden per afbeelding",
+    "pointsPerImage": "Punten per goede afbeelding",
+    "wrongPressPenalty": "Aftrek bij foute druk",
+    "speedBonus": "Snelheidsbonus (tot 1 punt in de eerste seconde)",
+    "sequenceImages": "Afbeeldingen ({{count}}, 5 tot 20)",
+    "imageYes": "Ja",
+    "imageNo": "Nee",
+    "addImages": "Afbeeldingen toevoegen"
   },
   "game": {
     "errors": {
@@ -140,7 +211,10 @@
       "session_not_found": "Deze code hoort niet bij een lopende quiz.",
       "invalid_photo": "Deze foto kon niet worden gebruikt.",
       "offline": "Geen verbinding. Probeer het zo opnieuw.",
-      "internal_error": "Er ging iets mis op de server."
+      "internal_error": "Er ging iets mis op de server.",
+      "no_media": "Dit onderdeel heeft geen geluid of video.",
+      "not_running": "De flitsreeks is nog niet begonnen.",
+      "already_pressed": "Jullie team heeft al gedrukt op deze afbeelding."
     }
   },
   "tv": {
@@ -169,7 +243,29 @@
     "false": "Niet waar",
     "scoreboard": "Tussenstand",
     "final": "Eindstand",
-    "winner": "Winnaar!"
+    "winner": "Winnaar!",
+    "newsUnavailable": "(kop niet beschikbaar)",
+    "listen": "Luister goed…",
+    "mediaError": "Deze video kan niet worden afgespeeld.",
+    "mediaErrors": {
+      "embed_blocked": "De eigenaar staat afspelen buiten YouTube niet toe.",
+      "not_found": "Deze video bestaat niet (meer).",
+      "invalid_id": "Ongeldige YouTube-link.",
+      "player_error": "De YouTube-speler gaf een fout.",
+      "youtube_api_unavailable": "YouTube is niet bereikbaar."
+    },
+    "clickToPlay": "Klik om af te spelen",
+    "flitsreeks": "Flitsreeks",
+    "imagesCount_one": "{{count}} afbeelding",
+    "imagesCount_other": "{{count}} afbeeldingen",
+    "sequenceHint": "Druk op je telefoon zodra het klopt. Eén keer per afbeelding!",
+    "sequenceDone": "Klaar! Even rekenen…",
+    "pressedBy": "{{count}} van {{total}} teams drukten",
+    "yes": "Ja",
+    "no": "Nee",
+    "ipHintLoopback": "Muziekvideo's op YouTube spelen vaak niet als de tv via een IP-adres is geopend. Open de tv via localhost.",
+    "ipHintLan": "Muziekvideo's op YouTube spelen vaak niet via een IP-adres. Open de tv op de laptop zelf via http://localhost:8080/tv.",
+    "ipHintSwitch": "Naar localhost"
   },
   "join": {
     "title": "Meedoen",
@@ -232,11 +328,23 @@
     "finished": "Klaar! Jullie eindigden als",
     "true": "Waar",
     "false": "Niet waar",
-    "offline": "Geen verbinding…"
+    "offline": "Geen verbinding…",
+    "sequenceDone": "Klaar!",
+    "pressedCount_one": "Jullie drukten bij {{count}} afbeelding.",
+    "pressedCount_other": "Jullie drukten bij {{count}} afbeeldingen.",
+    "sequenceStartsIn": "Begint over {{n}}…",
+    "pressed": "Gedrukt!",
+    "pressHint": "Eén druk per afbeelding telt voor het hele team, en kan niet terug.",
+    "imagesRight": "{{right}} van {{total}} afbeeldingen goed"
   },
   "host": {
     "title": "Quizmaster",
-    "tabs": { "game": "Spel", "teams": "Teams", "messages": "Berichten", "quizzes": "Quizzen" },
+    "tabs": {
+      "game": "Spel",
+      "teams": "Teams",
+      "messages": "Berichten",
+      "quizzes": "Quizzen"
+    },
     "noSession": "Er loopt geen quiz. Kies er hieronder een.",
     "start": "Start",
     "confirmStart": "Er loopt al een quiz. Die stoppen (de stand wordt bewaard) en “{{title}}” starten?",
@@ -265,7 +373,9 @@
       "reveal": "Toon antwoord",
       "next": "Volgende",
       "previous": "Vorige",
-      "finish": "Naar de eindstand"
+      "finish": "Naar de eindstand",
+      "playFirst": "Speel eerst het fragment",
+      "startSequence": "Start de flitsreeks"
     },
     "photosMissing": "Nog geen foto: {{teams}}",
     "allPhotos": "Alle teams hebben een foto.",
@@ -281,8 +391,17 @@
     "noVotes": "nog geen stemmen",
     "tieBreak": "geloot",
     "voteSummary": "{{votes}}/{{total}} stemmen",
-    "match": { "exact": "exact", "fuzzy": "bijna", "none": "anders" },
-    "verdict": { "correct": "Goed", "half": "Half", "wrong": "Fout", "pending": "Open" },
+    "match": {
+      "exact": "exact",
+      "fuzzy": "bijna",
+      "none": "anders"
+    },
+    "verdict": {
+      "correct": "Goed",
+      "half": "Half",
+      "wrong": "Fout",
+      "pending": "Open"
+    },
     "timer": "Timer",
     "timerStart": "Start",
     "timerAdd": "+15 s",
@@ -317,7 +436,24 @@
     "onTv": "Nu op de tv:",
     "quickMessages": "Snelle berichten",
     "saveQuick": "Bewaren als snel bericht",
-    "removeQuick": "Weghalen"
+    "removeQuick": "Weghalen",
+    "media": "Media op de tv",
+    "revealMedia": "Media bij het antwoord",
+    "mediaStatus": {
+      "idle": "klaar",
+      "playing": "speelt",
+      "paused": "gepauzeerd",
+      "ended": "afgelopen",
+      "error": "fout"
+    },
+    "play": "Afspelen",
+    "pause": "Pauze",
+    "replay": "Opnieuw",
+    "mute": "Geluid uit",
+    "unmute": "Geluid aan",
+    "grid": "Overzicht",
+    "yesImages": "Ja bij",
+    "imagesRight": "{{right}}/{{total}} goed"
   },
   "settings": {
     "title": "Instellingen",
@@ -327,6 +463,30 @@
     "envNotSet": "PUBLIC_BASE_URL is niet ingesteld.",
     "currentJoin": "Telefoons gaan nu naar:",
     "testHint": "Open dit adres op je telefoon (via wifi) om het te testen.",
-    "defaultLocale": "Taal voor beheer en quizmaster"
+    "defaultLocale": "Taal voor beheer en quizmaster",
+    "backup": "Volledige back-up",
+    "backupHint": "Database, afbeeldingen en teamfoto's in één zip. Kan veilig terwijl een quiz loopt.",
+    "backupDownload": "Back-up downloaden"
+  },
+  "packages": {
+    "upload": "Pakket uploaden",
+    "download": "Pakket downloaden",
+    "summary": "{{rounds}} rondes · {{questions}} vragen · {{slides}} dia's · {{media}} mediabestanden",
+    "exists": "Deze quiz staat er al in als “{{title}}”.",
+    "importNew": "Importeren als nieuwe quiz",
+    "replace": "Bestaande vervangen",
+    "errors": {
+      "not_a_zip": "Dit is geen Kwistig-pakket (.zip).",
+      "package_too_large": "Dit pakket is te groot.",
+      "invalid_path": "Het pakket bevat een ongeldig bestandspad.",
+      "invalid_manifest": "manifest.json ontbreekt of is ongeldig.",
+      "missing_manifest_json": "manifest.json ontbreekt.",
+      "missing_quiz_json": "quiz.json ontbreekt.",
+      "missing_file": "Er ontbreekt een bestand uit het manifest.",
+      "checksum_mismatch": "Een bestand is beschadigd of aangepast (controlesom klopt niet).",
+      "invalid_json": "Een JSON-bestand in het pakket is ongeldig.",
+      "invalid_quiz": "quiz.json is niet geldig:",
+      "quiz_not_found": "De quiz om te vervangen bestaat niet meer."
+    }
   }
 }

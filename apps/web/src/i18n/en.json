@@ -18,7 +18,10 @@
     "unsavedChanges": "Unsaved changes",
     "confirmLeave": "You have unsaved changes. Leave anyway?",
     "language": "Language",
-    "languages": { "nl": "Dutch", "en": "English" },
+    "languages": {
+      "nl": "Dutch",
+      "en": "English"
+    },
     "comingSoon": "This screen arrives in a later phase."
   },
   "errors": {
@@ -78,7 +81,10 @@
     "translation": "Translation ({{lang}})",
     "addTranslation": "+ {{lang}}",
     "removeTranslation": "Remove translation",
-    "kind": { "slide": "Slide", "question": "Question" },
+    "kind": {
+      "slide": "Slide",
+      "question": "Question"
+    },
     "answerTypes": {
       "multiple_choice": "Multiple choice",
       "true_false": "True / false",
@@ -114,11 +120,76 @@
     "slideShowScoreboard": "Standings",
     "background": "Background colour",
     "countdown": "Countdown (s)",
-    "hasMedia": "With media: {{type}}",
     "jsonOnly": "In this version this type can only be edited as JSON.",
     "jsonEditor": "JSON",
     "jsonInvalid": "Invalid JSON",
-    "untitled": "(untitled)"
+    "untitled": "(untitled)",
+    "media": "Media with the question",
+    "revealMedia": "Media with the answer",
+    "mediaType": "Type",
+    "mediaNone": "None",
+    "mediaTypes": {
+      "image": "Image",
+      "youtube": "YouTube",
+      "spotify": "Spotify",
+      "news": "News article"
+    },
+    "mediaPlay": "When",
+    "playWith": "Together with the question",
+    "playBefore": "Play first, then the question",
+    "revealEffect": "Reveal effect",
+    "reveal": {
+      "none": "None",
+      "pixelate": "Pixelated to sharp",
+      "zoom": "Zoomed in to full",
+      "blur": "Blurred to sharp"
+    },
+    "spotifyUri": "Spotify track (link or URI)",
+    "spotifyLater": "Spotify playback arrives in Phase 4.",
+    "startSec": "Start (s)",
+    "endSec": "End (s)",
+    "youtubeUrl": "YouTube link or video ID",
+    "youtubeChecking": "Checking…",
+    "youtubeErrors": {
+      "embed_blocked": "This video can't be played outside YouTube. Pick another one.",
+      "not_found": "This video doesn't exist.",
+      "unreachable": "YouTube couldn't be reached to check.",
+      "invalid_id": "This isn't a valid YouTube link."
+    },
+    "hideVideo": "Audio only (hide the video)",
+    "testClip": "Test the clip",
+    "newsUrl": "Link to the article",
+    "fetchNews": "Fetch",
+    "blankWord": "Word to leave out of the headline",
+    "noHeadline": "(no headline found)",
+    "uploadImage": "Choose image",
+    "replaceImage": "Replace",
+    "imageUrlPlaceholder": "or paste an image link",
+    "mediaMissing": "This file is missing.",
+    "mediaWarnings": "Saved, but note:",
+    "mediaErrors": {
+      "upload_failed": "Upload failed.",
+      "unsupported_image": "Only PNG, JPEG, GIF and WebP.",
+      "too_large": "The file is too large.",
+      "missing_media": "file missing",
+      "offline": "fetching from the internet is turned off",
+      "private_address": "addresses on the local network are not allowed",
+      "unsupported_url": "link not supported",
+      "host_not_found": "website not found",
+      "timeout": "took too long",
+      "fetch_failed": "fetch failed",
+      "no_headline": "no headline found"
+    },
+    "backgroundImage": "Background image",
+    "buttonLabel": "Button text",
+    "secondsPerImage": "Seconds per image",
+    "pointsPerImage": "Points per right image",
+    "wrongPressPenalty": "Penalty per wrong press",
+    "speedBonus": "Speed bonus (up to 1 point in the first second)",
+    "sequenceImages": "Images ({{count}}, 5 to 20)",
+    "imageYes": "Yes",
+    "imageNo": "No",
+    "addImages": "Add images"
   },
   "game": {
     "errors": {
@@ -140,7 +211,10 @@
       "session_not_found": "This code doesn't belong to a running quiz.",
       "invalid_photo": "This photo couldn't be used.",
       "offline": "No connection. Try again in a moment.",
-      "internal_error": "Something went wrong on the server."
+      "internal_error": "Something went wrong on the server.",
+      "no_media": "This item has no audio or video.",
+      "not_running": "The rapid sequence hasn't started yet.",
+      "already_pressed": "Your team already pressed on this image."
     }
   },
   "tv": {
@@ -169,7 +243,29 @@
     "false": "False",
     "scoreboard": "Standings",
     "final": "Final standings",
-    "winner": "Winner!"
+    "winner": "Winner!",
+    "newsUnavailable": "(headline unavailable)",
+    "listen": "Listen carefully…",
+    "mediaError": "This video can't be played.",
+    "mediaErrors": {
+      "embed_blocked": "The owner doesn't allow playback outside YouTube.",
+      "not_found": "This video no longer exists.",
+      "invalid_id": "Invalid YouTube link.",
+      "player_error": "The YouTube player reported an error.",
+      "youtube_api_unavailable": "YouTube can't be reached."
+    },
+    "clickToPlay": "Click to play",
+    "flitsreeks": "Rapid sequence",
+    "imagesCount_one": "{{count}} image",
+    "imagesCount_other": "{{count}} images",
+    "sequenceHint": "Press on your phone when it's true. Once per image!",
+    "sequenceDone": "Done! Counting…",
+    "pressedBy": "{{count}} of {{total}} teams pressed",
+    "yes": "Yes",
+    "no": "No",
+    "ipHintLoopback": "YouTube music videos often won't play when the TV is opened via an IP address. Open the TV via localhost.",
+    "ipHintLan": "YouTube music videos often won't play via an IP address. Open the TV on the laptop itself at http://localhost:8080/tv.",
+    "ipHintSwitch": "Switch to localhost"
   },
   "join": {
     "title": "Join",
@@ -232,11 +328,23 @@
     "finished": "Done! You finished in place",
     "true": "True",
     "false": "False",
-    "offline": "No connection…"
+    "offline": "No connection…",
+    "sequenceDone": "Done!",
+    "pressedCount_one": "You pressed on {{count}} image.",
+    "pressedCount_other": "You pressed on {{count}} images.",
+    "sequenceStartsIn": "Starts in {{n}}…",
+    "pressed": "Pressed!",
+    "pressHint": "One press per image counts for the whole team, and can't be undone.",
+    "imagesRight": "{{right}} of {{total}} images right"
   },
   "host": {
     "title": "Quizmaster",
-    "tabs": { "game": "Game", "teams": "Teams", "messages": "Messages", "quizzes": "Quizzes" },
+    "tabs": {
+      "game": "Game",
+      "teams": "Teams",
+      "messages": "Messages",
+      "quizzes": "Quizzes"
+    },
     "noSession": "No quiz is running. Pick one below.",
     "start": "Start",
     "confirmStart": "A quiz is already running. Stop it (standings are kept) and start “{{title}}”?",
@@ -265,7 +373,9 @@
       "reveal": "Show answer",
       "next": "Next",
       "previous": "Previous",
-      "finish": "To the final standings"
+      "finish": "To the final standings",
+      "playFirst": "Play the clip first",
+      "startSequence": "Start the rapid sequence"
     },
     "photosMissing": "No photo yet: {{teams}}",
     "allPhotos": "Every team has a photo.",
@@ -281,8 +391,17 @@
     "noVotes": "no votes yet",
     "tieBreak": "drawn",
     "voteSummary": "{{votes}}/{{total}} votes",
-    "match": { "exact": "exact", "fuzzy": "close", "none": "different" },
-    "verdict": { "correct": "Right", "half": "Half", "wrong": "Wrong", "pending": "Open" },
+    "match": {
+      "exact": "exact",
+      "fuzzy": "close",
+      "none": "different"
+    },
+    "verdict": {
+      "correct": "Right",
+      "half": "Half",
+      "wrong": "Wrong",
+      "pending": "Open"
+    },
     "timer": "Timer",
     "timerStart": "Start",
     "timerAdd": "+15 s",
@@ -317,7 +436,24 @@
     "onTv": "On the TV now:",
     "quickMessages": "Quick messages",
     "saveQuick": "Save as quick message",
-    "removeQuick": "Remove"
+    "removeQuick": "Remove",
+    "media": "Media on the TV",
+    "revealMedia": "Media with the answer",
+    "mediaStatus": {
+      "idle": "ready",
+      "playing": "playing",
+      "paused": "paused",
+      "ended": "ended",
+      "error": "error"
+    },
+    "play": "Play",
+    "pause": "Pause",
+    "replay": "Replay",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "grid": "Overview",
+    "yesImages": "Yes on",
+    "imagesRight": "{{right}}/{{total}} right"
   },
   "settings": {
     "title": "Settings",
@@ -327,6 +463,30 @@
     "envNotSet": "PUBLIC_BASE_URL is not set.",
     "currentJoin": "Phones currently go to:",
     "testHint": "Open this address on your phone (over Wi-Fi) to test it.",
-    "defaultLocale": "Language for admin and quizmaster"
+    "defaultLocale": "Language for admin and quizmaster",
+    "backup": "Full backup",
+    "backupHint": "Database, images and team photos in one zip. Safe while a quiz is running.",
+    "backupDownload": "Download backup"
+  },
+  "packages": {
+    "upload": "Upload package",
+    "download": "Download package",
+    "summary": "{{rounds}} rounds · {{questions}} questions · {{slides}} slides · {{media}} media files",
+    "exists": "This quiz is already here as “{{title}}”.",
+    "importNew": "Import as new quiz",
+    "replace": "Replace existing",
+    "errors": {
+      "not_a_zip": "This isn't a Kwistig package (.zip).",
+      "package_too_large": "This package is too large.",
+      "invalid_path": "The package contains an invalid file path.",
+      "invalid_manifest": "manifest.json is missing or invalid.",
+      "missing_manifest_json": "manifest.json is missing.",
+      "missing_quiz_json": "quiz.json is missing.",
+      "missing_file": "A file listed in the manifest is missing.",
+      "checksum_mismatch": "A file is damaged or was changed (checksum mismatch).",
+      "invalid_json": "A JSON file in the package is invalid.",
+      "invalid_quiz": "quiz.json is not valid:",
+      "quiz_not_found": "The quiz to replace no longer exists."
+    }
   }
 }
