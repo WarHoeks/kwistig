@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { QuizSummary } from "@kwistig/shared";
 import { api } from "../../lib/api";
 import { useHost } from "./HostScreen";
+import { PackageUpload } from "../../components/PackageUpload";
 
 export function QuizPicker({ onStarted }: { onStarted: () => void }) {
   const { t } = useTranslation();
@@ -24,6 +25,7 @@ export function QuizPicker({ onStarted }: { onStarted: () => void }) {
 
   return (
     <div className="space-y-3">
+      <PackageUpload className="btn-ghost w-full" onImported={() => api<QuizSummary[]>("/quizzes").then(setQuizzes)} />
       {quizzes === null && <p className="text-ink-400">{t("common.loading")}</p>}
       {quizzes?.length === 0 && <p className="text-ink-400">{t("admin.empty")}</p>}
       <ul className="space-y-2">
@@ -33,6 +35,9 @@ export function QuizPicker({ onStarted }: { onStarted: () => void }) {
               <p className="truncate font-semibold">{q.title}</p>
               <p className="text-sm text-ink-400">{t("admin.stats", { rounds: q.roundCount, items: q.itemCount })}</p>
             </div>
+            <a href={`/api/quizzes/${q.id}/package`} className="btn-ghost btn-sm" download aria-label={t("packages.download")} title={t("packages.download")}>
+              ⬇
+            </a>
             <button type="button" className="btn-primary" onClick={() => void start(q)}>
               {t("host.start")}
             </button>

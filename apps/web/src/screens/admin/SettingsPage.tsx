@@ -96,6 +96,14 @@ export function SettingsPage() {
         </select>
       </div>
 
+      <div className="card space-y-2 p-5">
+        <p className="label">{t("settings.backup")}</p>
+        <p className="text-sm text-ink-400">{t("settings.backupHint")}</p>
+        <a href="/api/settings/backup" className="btn-ghost" download>
+          {t("settings.backupDownload")}
+        </a>
+      </div>
+
       {saved && <p className="text-emerald-300">{t("common.saved")}</p>}
       {error && <IssueList message={error.message} issues={error.issues} onClose={() => setError(undefined)} />}
     </main>

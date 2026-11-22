@@ -5,6 +5,7 @@ import type { Language, QuizSummary } from "@kwistig/shared";
 import { api, errorKey, RequestError } from "../../lib/api";
 import { intlLocale } from "../../i18n";
 import { IssueList } from "./IssueList";
+import { PackageUpload } from "../../components/PackageUpload";
 
 export function QuizLibrary() {
   const { t, i18n } = useTranslation();
@@ -72,6 +73,12 @@ export function QuizLibrary() {
       <div className="flex flex-wrap items-end gap-4">
         <h1 className="text-2xl font-bold">{t("admin.library")}</h1>
         <div className="ml-auto flex gap-2">
+          <PackageUpload
+            onImported={() => {
+              setNotice(t("admin.importSuccess"));
+              load();
+            }}
+          />
           <button type="button" className="btn-ghost" onClick={() => fileInput.current?.click()}>
             {t("admin.import")}
           </button>
@@ -139,6 +146,9 @@ export function QuizLibrary() {
                 <Link to={`/admin/quiz/${q.id}`} className="btn-primary btn-sm">
                   {t("admin.edit")}
                 </Link>
+                <a href={`/api/quizzes/${q.id}/package`} className="btn-ghost btn-sm" download>
+                  {t("packages.download")}
+                </a>
                 <a href={`/api/quizzes/${q.id}/export`} className="btn-ghost btn-sm" download>
                   {t("admin.export")}
                 </a>
