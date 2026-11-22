@@ -19,6 +19,7 @@ async function start() {
   const config = loadConfig({
     HOST_PIN: TEST_PIN,
     LOG_LEVEL: "silent",
+    EXTERNAL_FETCH: "false",
     DATA_DIR: dataDir,
     MIGRATIONS_DIR: path.resolve(import.meta.dirname, "../drizzle"),
     WEB_DIST: path.resolve(import.meta.dirname, "__no_web__"),

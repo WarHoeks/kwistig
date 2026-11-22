@@ -3,12 +3,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { and, desc, eq, isNull, notInArray } from "drizzle-orm";
 import type { FastifyBaseLogger } from "fastify";
-import { buildRunOrder, Quiz, type GameState, type RunItem } from "@kwistig/shared";
+import { buildRunOrder, collectNewsUrls, Quiz, type GameState, type NewsInfo, type RunItem } from "@kwistig/shared";
 import type { Db } from "../db/client.js";
 import { answer, gameSession, player, team } from "../db/schema.js";
 import { loadQuiz, toDocument } from "../services/quizzes.js";
 import { GameError, initialState, reduce, type MachineIntent } from "./machine.js";
 import { computeScores } from "./scoring.js";
+import type { MediaStore } from "../services/media.js";
 
 export const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
@@ -35,6 +36,8 @@ export class GameRunner {
     private readonly db: Db,
     private readonly dataDir: string,
     private readonly log: FastifyBaseLogger,
+    /** Read-only here: looks up cached news headlines when a session starts. */
+    private readonly media: MediaStore,
     private readonly now: () => number = Date.now,
   ) {}
 
@@ -85,6 +88,10 @@ export class GameRunner {
         .returning({ id: gameSession.id })
         .get();
       const s = initialState({ sessionId: id, quizId, joinCode, quizTitle: doc.title, quizLang: doc.language });
+      // Headlines and images were fetched when the quiz was saved; copy them into the session.
+      s.news = Object.fromEntries(
+        collectNewsUrls(doc).map((url) => [url, this.media.getMeta<NewsInfo>("news", url) ?? { headline: null, image: null }]),
+      );
       this.persist(tx as unknown as Db, s);
       return s;
     });

@@ -4,10 +4,15 @@ import {
   type GameErrorCode,
   type GameState,
   type HostIntent,
+  type Item,
   type ItemRun,
+  type Media,
+  type MediaPlayback,
   type PlayerRec,
   type RunItem,
+  type SequenceState,
   type TeamRec,
+  type TvIntent,
 } from "@kwistig/shared";
 import { judge, resolveVotes } from "./scoring.js";
 
@@ -29,6 +34,8 @@ export type MachineIntent =
   | Exclude<HostIntent, { type: "startQuiz" }>
   | { type: "vote"; teamId: number; playerId: number; value: AnswerValue }
   | { type: "retractVote"; teamId: number; playerId: number }
+  | { type: "press"; teamId: number; playerId: number }
+  | TvIntent
   | { type: "addTeam"; team: TeamRec }
   | { type: "addPlayer"; player: PlayerRec }
   | { type: "setPhoto"; teamId: number; photo: string }
@@ -91,10 +98,14 @@ function team(s: GameState, id: number): TeamRec {
   return s.teams.find((t) => t.id === id) ?? fail("unknown_team");
 }
 
-/** Closes answering: votes become one answer per team, which is then judged. */
-function lockRun(run: ItemRun, ri: RunItem, ctx: Ctx) {
+/** Closes answering: votes (or flitsreeks presses) become one judged answer per team. */
+function lockRun(s: GameState, run: ItemRun, ri: RunItem, ctx: Ctx) {
   run.step = "locked";
   run.timer = null;
+  if (ri.item.kind === "question" && ri.item.answerType === "rapid_sequence") {
+    run.answers = judgeSequence(s, run, ri.item);
+    return;
+  }
   run.votes ??= {};
   run.answers = judge(ri, resolveVotes(ri, run, ctx.random));
 }
@@ -110,17 +121,118 @@ function dropVotes(s: GameState, playerId: number) {
 function enter(s: GameState, cursor: number, ctx: Ctx) {
   const cur = currentRun(s);
   const curRi = ctx.run[s.cursor];
-  if (cur && curRi && cur.step === "answering") lockRun(cur, curRi, ctx);
+  if (cur && curRi && cur.step === "answering") lockRun(s, cur, curRi, ctx);
   s.phase = "item";
   s.cursor = cursor;
   s.items[cursor] ??= { step: "shown", votes: {}, answers: {}, timer: null };
   s.overlay.scoreboard = false;
+  const ri = ctx.run[cursor];
+  const media = ri && "media" in ri.item ? ri.item.media : undefined;
+  setPlayback(s, cursor, "question", media);
+}
+
+/** Audio/video the TV plays on command; images and news need no playback. */
+const isPlayableMedia = (m: Media | undefined): m is Media => m?.type === "youtube" || m?.type === "spotify";
+
+/** Resets playback for an item's media slot; `seq` only ever increases. */
+function setPlayback(s: GameState, cursor: number, slot: MediaPlayback["slot"], media: Media | undefined) {
+  if (!isPlayableMedia(media)) {
+    if (slot === "question") delete s.media;
+    return;
+  }
+  s.media = { cursor, slot, status: "idle", seq: (s.media?.seq ?? 0) + 1, muted: s.media?.muted ?? false };
+}
+
+function requireMedia(s: GameState): MediaPlayback {
+  return s.phase === "item" && s.media?.cursor === s.cursor ? s.media : fail("no_media");
+}
+
+// ---------------------------------------------------------------- flitsreeks
+
+/** 3-2-1 on the TV before the first image. */
+export const SEQUENCE_LEAD_MS = 3000;
+
+type RapidItem = Extract<Item, { answerType: "rapid_sequence" }>;
+
+function startSequence(run: ItemRun, q: RapidItem, now: number) {
+  const ms = (q.secondsPerImage ?? 5) * 1000;
+  const graceMs = q.graceMs ?? 300;
+  const startAt = now + SEQUENCE_LEAD_MS;
+  const endsAt = startAt + q.images.length * ms + graceMs;
+  run.seq = { startAt, ms, count: q.images.length, graceMs };
+  run.presses = {};
+  run.timer = { endsAt, durationMs: endsAt - now };
+}
+
+/**
+ * Which image a press received at `now` counts for. A press in the grace window
+ * right after a switch counts for the previous image if the team hadn't pressed it.
+ */
+export function pressIndex(seq: SequenceState, now: number, teamPresses: Record<string, unknown>): number | null {
+  const t = now - seq.startAt;
+  if (t < 0) return null;
+  let index = Math.floor(t / seq.ms);
+  if (index >= seq.count) return t < seq.count * seq.ms + seq.graceMs ? seq.count - 1 : null;
+  if (index > 0 && t - index * seq.ms < seq.graceMs && teamPresses[index - 1] === undefined) index -= 1;
+  return index;
+}
+
+/** Most points a flitsreeks can give (no speed bonus). */
+export function sequenceMaxPoints(q: RapidItem): number {
+  return q.images.length * (q.scoring?.pointsPerImage ?? 1);
+}
+
+/**
+ * Judges every team: each image is right when pressed on a "yes" image or left
+ * alone on a "no" image. Points per right image, an optional speed bonus of up to
+ * 1 point for a right press in the image's first second, and an optional penalty
+ * per press on a "no" image. Teams that never pressed still score their "no"s.
+ */
+function judgeSequence(s: GameState, run: ItemRun, q: RapidItem): ItemRun["answers"] {
+  const seq = run.seq;
+  const ppi = q.scoring?.pointsPerImage ?? 1;
+  const out: ItemRun["answers"] = {};
+  for (const team of s.teams) {
+    const presses = run.presses?.[team.id] ?? {};
+    const prev = run.answers[team.id];
+    let right = 0;
+    let points = 0;
+    const mask = q.images
+      .map((img, i) => {
+        const p = presses[i];
+        if (!!p === img.yes) {
+          right += 1;
+          points += ppi;
+          if (p && q.scoring?.speedBonus && seq) {
+            const sinceShown = p.at - (seq.startAt + i * seq.ms);
+            points += Math.max(0, Math.round((1 - sinceShown / 1000) * 10) / 10);
+          }
+        } else if (p) {
+          points -= q.scoring?.wrongPressPenalty ?? 0;
+        }
+        return p ? "1" : "0";
+      })
+      .join("");
+    const first = Object.values(presses).sort((a, b) => a.at - b.at)[0];
+    const auto = {
+      value: mask,
+      playerId: first?.playerId ?? 0,
+      at: first?.at ?? 0,
+      verdict: right === q.images.length ? ("correct" as const) : right === 0 ? ("wrong" as const) : ("half" as const),
+      points: Math.round(points * 10) / 10,
+      votes: 0,
+      totalVotes: 0,
+      tieBreak: false,
+    };
+    out[team.id] = prev?.manual && prev.value === mask ? { ...auto, verdict: prev.verdict, points: prev.points, manual: true } : auto;
+  }
+  return out;
 }
 
 function finish(s: GameState, ctx: Ctx) {
   const cur = currentRun(s);
   const curRi = ctx.run[s.cursor];
-  if (cur && curRi && cur.step === "answering") lockRun(cur, curRi, ctx);
+  if (cur && curRi && cur.step === "answering") lockRun(s, cur, curRi, ctx);
   s.phase = "finished";
   s.overlay.scoreboard = false;
 }
@@ -200,22 +312,92 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
         }
       }
       run.step = "answering";
-      if (ri.timeLimitSec) startTimer(run, ri.timeLimitSec, now);
+      if (q.answerType === "rapid_sequence") startSequence(run, q, now);
+      else if (ri.timeLimitSec) startTimer(run, ri.timeLimitSec, now);
       return;
     }
 
     case "lock": {
       const { ri, run } = requireQuestion(s, ctx);
       if (run.step !== "answering") fail("not_answering");
-      lockRun(run, ri, ctx);
+      lockRun(s, run, ri, ctx);
       return;
     }
 
     case "reveal": {
-      const { ri, run } = requireQuestion(s, ctx);
+      const { ri, run, q } = requireQuestion(s, ctx);
       if (run.step === "revealed") return;
-      if (run.step === "answering" || run.step === "shown") lockRun(run, ri, ctx);
+      if (run.step === "answering" || run.step === "shown") lockRun(s, run, ri, ctx);
       run.step = "revealed";
+      run.spotlight = null;
+      // Reveal media (e.g. the full clip) takes over the TV's player.
+      if (q.answerType !== "rapid_sequence" && isPlayableMedia(q.revealMedia)) setPlayback(s, s.cursor, "reveal", q.revealMedia);
+      return;
+    }
+
+    case "spotlight": {
+      const { run, q } = requireQuestion(s, ctx);
+      if (q.answerType !== "rapid_sequence" || run.step !== "revealed") fail("wrong_phase");
+      if (intent.index !== null && intent.index >= (q as RapidItem).images.length) fail("invalid_intent");
+      run.spotlight = intent.index;
+      return;
+    }
+
+    // ---------------------------------------------------------- media playback
+    case "mediaPlay": {
+      const m = requireMedia(s);
+      if (m.status !== "paused") m.seq += 1; // (re)start from the start marker
+      m.status = "playing";
+      delete m.error;
+      return;
+    }
+
+    case "mediaReplay": {
+      const m = requireMedia(s);
+      m.seq += 1;
+      m.status = "playing";
+      delete m.error;
+      return;
+    }
+
+    case "mediaPause": {
+      const m = requireMedia(s);
+      if (m.status === "playing") m.status = "paused";
+      return;
+    }
+
+    case "mediaMute":
+      requireMedia(s).muted = intent.on;
+      return;
+
+    case "mediaEnded": {
+      // Reports for an older start (a replay already happened) are ignored.
+      const m = s.media;
+      if (m && m.seq === intent.seq && m.status === "playing") m.status = "ended";
+      return;
+    }
+
+    case "mediaError": {
+      const m = s.media;
+      if (m && m.seq === intent.seq) {
+        m.status = "error";
+        m.error = intent.code;
+      }
+      return;
+    }
+
+    case "press": {
+      team(s, intent.teamId);
+      const { run, q } = requireQuestion(s, ctx);
+      if (q.answerType !== "rapid_sequence") fail("not_a_question");
+      if (run.step === "locked" || run.step === "revealed") fail("locked");
+      if (run.step !== "answering" || !run.seq) fail("not_running");
+      run.presses ??= {};
+      const teamPresses = (run.presses[intent.teamId] ??= {});
+      const index = pressIndex(run.seq!, now, teamPresses);
+      if (index === null) fail(now < run.seq!.startAt ? "not_running" : "locked");
+      if (teamPresses[index!] !== undefined) fail("already_pressed");
+      teamPresses[index!] = { playerId: intent.playerId, at: now };
       return;
     }
 
@@ -249,7 +431,9 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       const ri = ctx.run[s.cursor];
       if (!run || !ri || run.step !== "answering" || !run.timer) return;
       if (now + TIMER_SLACK_MS < run.timer.endsAt) return;
-      if (s.autoLock) lockRun(run, ri, ctx);
+      // A flitsreeks always closes at the end of its sequence.
+      const rapid = ri.item.kind === "question" && ri.item.answerType === "rapid_sequence";
+      if (s.autoLock || rapid) lockRun(s, run, ri, ctx);
       return;
     }
 
@@ -284,8 +468,9 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       const { ri, run } = requireQuestion(s, ctx);
       if (run.step !== "locked" && run.step !== "revealed") fail("wrong_phase");
       const a = run.answers[intent.teamId] ?? fail("no_answer");
+      const max = ri.item.kind === "question" && ri.item.answerType === "rapid_sequence" ? sequenceMaxPoints(ri.item) : ri.points;
       a.verdict = intent.verdict;
-      a.points = intent.verdict === "correct" ? ri.points : intent.verdict === "half" ? ri.points / 2 : 0;
+      a.points = intent.verdict === "correct" ? max : intent.verdict === "half" ? max / 2 : 0;
       a.manual = true;
       return;
     }

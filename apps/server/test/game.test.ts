@@ -357,7 +357,7 @@ describe("projections never leak answers before reveal", () => {
         if (item.answerType === "open") secrets.push(...item.acceptedAnswers);
       }
       const steps: (MachineIntent | null)[] =
-        item.kind === "question" && ["multiple_choice", "true_false", "open", "number"].includes(item.answerType)
+        item.kind === "question" && ["multiple_choice", "true_false", "open", "number", "rapid_sequence"].includes(item.answerType)
           ? [null, { type: "open" }, { type: "lock" }]
           : [null];
       for (const step of steps) {

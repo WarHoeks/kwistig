@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { Server, type Socket } from "socket.io";
-import { HostIntent, TeamIntent, type Ack, type IdleView } from "@kwistig/shared";
+import { HostIntent, TeamIntent, TvIntent, type Ack, type IdleView } from "@kwistig/shared";
 import { formatIssues } from "@kwistig/shared";
 import { GameError } from "./machine.js";
 import { hostView, teamView, tvView } from "./project.js";
@@ -154,11 +154,23 @@ export function attachHub(app: FastifyInstance, runner: GameRunner) {
       const p = data.token ? runner.findPlayerByToken(data.token) : undefined;
       if (!p) throw new GameError("unknown_player");
       const intent = parsed.data;
-      runner.dispatch(
-        intent.type === "vote"
-          ? { type: "vote", teamId: p.teamId, playerId: p.id, value: intent.value }
-          : { type: "retractVote", teamId: p.teamId, playerId: p.id },
-      );
+      const who = { teamId: p.teamId, playerId: p.id };
+      switch (intent.type) {
+        case "vote":
+          runner.dispatch({ type: "vote", ...who, value: intent.value });
+          return;
+        case "retractVote":
+          runner.dispatch({ type: "retractVote", ...who });
+          return;
+        case "press":
+          runner.dispatch({ type: "press", ...who });
+          return;
+      }
+    }
+    if (data.role === "tv") {
+      const parsed = TvIntent.safeParse(raw);
+      if (!parsed.success) throw new GameError("invalid_intent");
+      runner.dispatch(parsed.data);
       return;
     }
     throw new GameError("forbidden");

@@ -8,6 +8,7 @@ import { clearPlayer, loadPlayer, squareJpeg } from "../../lib/player";
 import { useGameSocket } from "../../lib/socket";
 import { formatScore, useQuizText } from "../../lib/text";
 import { TeamDecision, TeamVote } from "./Voting";
+import { PressButton } from "./PressButton";
 import { setLanguage } from "../../i18n";
 
 export function PlayScreen() {
@@ -150,6 +151,31 @@ function PlayBody({
 
   if (view.step === "revealed") return <Result view={view} />;
 
+  if (item.answerType === "rapid_sequence") {
+    return (
+      <div className="flex flex-1 flex-col gap-4">
+        <p className="text-center text-lg font-semibold">{text(item.prompt)}</p>
+        <PressButton
+          item={item}
+          view={view}
+          clockOffset={clockOffset}
+          onPress={async () => {
+            setError(null);
+            const ack = await send({ type: "press" });
+            // "already pressed" just means a teammate was quicker: no need to shout.
+            if (!ack.ok && ack.error !== "already_pressed") setError(t(`game.errors.${ack.error}`, { defaultValue: t("errors.generic") }));
+            return ack.ok;
+          }}
+        />
+        {error && (
+          <p role="alert" className="rounded-xl bg-red-500/15 px-4 py-3 text-center text-red-200">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col gap-4">
       <div className="flex items-baseline justify-between text-sm text-ink-400">
@@ -185,10 +211,20 @@ function Result({ view }: { view: TeamView }) {
         </p>
         {r && r.points > 0 && <p className="mt-2 text-2xl font-bold">{t("play.pointsEarned", { points: formatScore(r.points, i18n.language) })}</p>}
       </div>
-      {view.answer && view.item?.kind === "question" && (
-        <div className="w-full">
-          <TeamDecision item={view.item} view={view} />
-        </div>
+      {view.item?.kind === "question" && view.item.answerType === "rapid_sequence" && typeof view.reveal?.correct === "string" ? (
+        <p className="text-lg" data-testid="play-sequence-score">
+          {t("play.imagesRight", {
+            right: [...view.reveal.correct].filter((c, i) => c === (String(view.answer?.value ?? "")[i] ?? "0")).length,
+            total: view.reveal.correct.length,
+          })}
+        </p>
+      ) : (
+        view.answer &&
+        view.item?.kind === "question" && (
+          <div className="w-full">
+            <TeamDecision item={view.item} view={view} />
+          </div>
+        )
       )}
       <TeamAvatar team={view.team} size={120} rounded="rounded-3xl" />
       <div className="grid w-full grid-cols-2 gap-3 text-center">
