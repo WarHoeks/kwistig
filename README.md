@@ -2,7 +2,14 @@
 
 *De huiskamerquiz.* A self-hosted living-room pub quiz: the TV shows the questions, teams answer on their phones, and the quizmaster runs it all from their own phone. See [docs/PLAN.md](docs/PLAN.md) for the full design.
 
-**Status:** Phase 1 (skeleton, data, admin editor) is done. The live game (TV, host remote, team phones) arrives in Phase 2, media in Phase 3 and Spotify in Phase 4. The setup steps below already describe the finished app.
+**Status:** Phases 1 and 2 are done: admin editor, and the live game with TV, host remote and team phones for multiple-choice, true/false, open and number questions. Media (images, YouTube, flitsreeks) arrives in Phase 3 and Spotify in Phase 4; until then those questions show their text only. The setup steps below already describe the finished app.
+
+## A quiz night
+
+1. On the laptop, open `http://127.0.0.1:8080/tv` (or the laptop's LAN address) in Chrome, sign in with the PIN once, and put it on the TV.
+2. On your phone, open `http://<laptop-ip>:8080/host`, sign in, and start a quiz. The TV shows a QR code.
+3. Teams scan the QR code, create a team or join one, and take a team photo when you start the photo step.
+4. Drive the game from your phone: open, close, reveal, next. Refreshing any device puts it back where it was, and so does restarting the container.
 
 ## Run it
 
@@ -65,8 +72,9 @@ npm install
 npm run build          # shared → web → server
 npm run dev:server     # API on :8080 (tsx watch)
 npm run dev:web        # Vite on :5173, proxies /api and /socket.io to :8080
-npm test               # Vitest: schema, API, state machine, scoring
-npm run e2e            # Playwright: full game with TV, host and two teams
+npm test               # Vitest: schema, API, state machine, scoring, matching, sockets
+npx playwright install chromium   # once
+npm run build && npm run e2e      # Playwright: full game with TV, host and two teams (screenshots in test-results/demo)
 npm run i18n:check     # nl.json and en.json must have the same keys
 npm run typecheck
 ```
