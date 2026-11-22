@@ -2,7 +2,7 @@
 
 *De huiskamerquiz.* A self-hosted living-room pub quiz: the TV shows the questions, teams answer on their phones, and the quizmaster runs it all from their own phone. See [docs/PLAN.md](docs/PLAN.md) for the full design.
 
-**Status:** Phases 1–3 are done: admin editor, the live game with team voting, images with reveal effects, YouTube clips, news headlines, flitsreeks, quiz packages and backups. Spotify arrives in Phase 4 and the buzzer in Phase 5; until then those questions show their text only. The setup steps below already describe the finished app.
+**Status:** Phases 1–4 are built: admin editor, the live game with team voting, images with reveal effects, YouTube clips, news headlines, flitsreeks, quiz packages, backups and Spotify. Spotify is tested against a fake Spotify; the live check with a real app is still to do. The buzzer arrives in Phase 5; until then buzzer questions show their text only.
 
 ## A quiz night
 
@@ -70,14 +70,19 @@ Kwistig doesn't log in to YouTube. The embedded player uses whatever Google acco
 
 ### 5. Spotify app (optional)
 
-Spotify questions need a Spotify Premium account and your own Spotify developer app:
+Spotify questions need a Spotify Premium account and your own Spotify developer app. Everything is set up under **Admin → Instellingen → Spotify**, which walks through the same steps:
 
 1. Go to the [Spotify developer dashboard](https://developer.spotify.com/dashboard) and create an app. Select *Web API* and *Web Playback SDK*.
-2. Add the redirect URI `http://127.0.0.1:8080/api/spotify/callback` exactly. Spotify doesn't accept `localhost`, only the loopback IP.
-3. Put the app's Client ID in `SPOTIFY_CLIENT_ID` in `docker-compose.yml` and restart.
-4. In admin settings, click **Connect Spotify** *from a browser on the laptop* (the redirect only works on `127.0.0.1`). You only do this once.
+2. Add the redirect URI shown in admin settings to the app, exactly (by default `http://127.0.0.1:8080/api/spotify/callback`). Spotify doesn't accept `localhost`, only the loopback IP. If Docker publishes Kwistig on another port, change the redirect URI in admin settings to match and register that one.
+3. Paste the app's Client ID in admin settings and save. (`SPOTIFY_CLIENT_ID` and `SPOTIFY_REDIRECT_URI` in `docker-compose.yml` still work as defaults; values saved in admin win.)
+4. Click **Spotify koppelen** *in a browser on the laptop* (the redirect goes to `127.0.0.1`). You only do this once; Kwistig keeps the login (Authorization Code with PKCE, no client secret) and refreshes it itself.
+5. Open the TV page at `http://localhost:8080/tv`. It becomes the Spotify Connect device **Kwistig TV**; click the TV screen once so the browser allows sound. **Spotify testen** in admin settings checks every endpoint Kwistig uses with your account.
 
-Development Mode apps allow up to five authorised users and need the app owner to have Premium. Only the host signs in, so that's enough.
+When a Spotify question plays, the TV shows only an animated equaliser, never the title, artist or cover. The host's play/pause/replay/mute buttons work as for YouTube; the server starts the clip at its start marker and pauses it at the end marker. If the TV page isn't a player (for example it isn't on the laptop), pick a **reserve-apparaat** in admin settings: any Spotify Connect speaker, phone or Chromecast that's on.
+
+**Round from a playlist:** in the quiz editor, *Ronde uit Spotify-playlist* turns tracks of one of your playlists into "Wie is de artiest?" questions with a random 20-second fragment, which you can then edit. Since February 2026 Spotify only returns the tracks of playlists **you own or collaborate on** to apps like this; to use someone else's or one of Spotify's own playlists, copy it into a playlist of your own first.
+
+Development Mode apps (what you get by default) need the app owner to have Premium, allow up to five authorised users, and up to 25 apps per developer. Only the host signs in, so that's enough. See the Spotify notes in [docs/PLAN.md](docs/PLAN.md) for what changed in Spotify's API in 2026.
 
 ## Development
 

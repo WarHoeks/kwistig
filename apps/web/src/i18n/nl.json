@@ -145,7 +145,6 @@
       "blur": "Van wazig naar scherp"
     },
     "spotifyUri": "Spotify-nummer (link of URI)",
-    "spotifyLater": "Spotify afspelen komt in fase 4.",
     "startSec": "Begin (s)",
     "endSec": "Einde (s)",
     "youtubeUrl": "YouTube-link of video-ID",
@@ -189,7 +188,8 @@
     "sequenceImages": "Afbeeldingen ({{count}}, 5 tot 20)",
     "imageYes": "Ja",
     "imageNo": "Nee",
-    "addImages": "Afbeeldingen toevoegen"
+    "addImages": "Afbeeldingen toevoegen",
+    "spotifyHint": "Plak een link uit Spotify (Delen → Link naar nummer kopiëren). De tv toont nooit titel of artiest."
   },
   "game": {
     "errors": {
@@ -252,7 +252,19 @@
       "not_found": "Deze video bestaat niet (meer).",
       "invalid_id": "Ongeldige YouTube-link.",
       "player_error": "De YouTube-speler gaf een fout.",
-      "youtube_api_unavailable": "YouTube is niet bereikbaar."
+      "youtube_api_unavailable": "YouTube is niet bereikbaar.",
+      "spotify_not_configured": "Vul eerst de Spotify Client ID in (Beheer → Instellingen).",
+      "spotify_not_connected": "Spotify is niet gekoppeld. Koppel het opnieuw in Beheer → Instellingen.",
+      "spotify_auth_failed": "Spotify weigerde de koppeling. Koppel opnieuw.",
+      "spotify_invalid_state": "Deze koppelpoging is verlopen. Probeer het opnieuw.",
+      "spotify_premium_required": "Spotify Premium is nodig om af te spelen.",
+      "spotify_no_device": "Geen Spotify-speler gevonden. Open de tv-pagina op de laptop of kies een reserve-apparaat.",
+      "spotify_quota": "Spotify-limiet bereikt. Wacht even.",
+      "spotify_not_found": "Dit nummer of deze playlist bestaat niet (meer).",
+      "spotify_forbidden": "Spotify staat dit niet toe voor deze app.",
+      "spotify_api_error": "Spotify gaf een fout.",
+      "spotify_player_unsupported": "Deze browser kan Spotify niet afspelen (DRM). Gebruik Chrome op de laptop.",
+      "spotify_sdk_unavailable": "De Spotify-speler kon niet laden."
     },
     "clickToPlay": "Klik om af te spelen",
     "flitsreeks": "Flitsreeks",
@@ -265,7 +277,8 @@
     "no": "Nee",
     "ipHintLoopback": "Muziekvideo's op YouTube spelen vaak niet als de tv via een IP-adres is geopend. Open de tv via localhost.",
     "ipHintLan": "Muziekvideo's op YouTube spelen vaak niet via een IP-adres. Open de tv op de laptop zelf via http://localhost:8080/tv.",
-    "ipHintSwitch": "Naar localhost"
+    "ipHintSwitch": "Naar localhost",
+    "spotifyClick": "Klik één keer op dit scherm om Spotify-geluid toe te staan"
   },
   "join": {
     "title": "Meedoen",
@@ -487,6 +500,52 @@
       "invalid_json": "Een JSON-bestand in het pakket is ongeldig.",
       "invalid_quiz": "quiz.json is niet geldig:",
       "quiz_not_found": "De quiz om te vervangen bestaat niet meer."
+    }
+  },
+  "spotify": {
+    "connectedAs": "Gekoppeld als {{name}}",
+    "notConnected": "Niet gekoppeld",
+    "step1": "Maak een app in het Spotify-dashboard (kies Web API en Web Playback SDK):",
+    "step2": "Voeg deze redirect-URI precies zo toe aan de app:",
+    "step3": "Plak hieronder de Client ID van de app en sla op.",
+    "step4": "Klik op Spotify koppelen, op de laptop zelf. Dit hoeft maar één keer.",
+    "clientId": "Client ID",
+    "redirectUri": "Redirect-URI",
+    "redirectHint": "Leeg laten voor de standaard (SPOTIFY_REDIRECT_URI). Spotify accepteert alleen 127.0.0.1, niet localhost. Pas aan als je Docker op een andere poort draait.",
+    "connect": "Spotify koppelen",
+    "disconnect": "Ontkoppelen",
+    "waiting": "Rond het inloggen af in het nieuwe tabblad…",
+    "laptopOnly": "Koppelen werkt alleen vanuit een browser op de laptop zelf: Spotify stuurt je terug naar 127.0.0.1.",
+    "tvPlayer": "Tv-speler",
+    "tvOnline": "Kwistig TV is klaar om af te spelen",
+    "tvOffline": "niet actief (open de tv-pagina op de laptop)",
+    "fallbackDevice": "Reserve-apparaat",
+    "noFallback": "Geen",
+    "savedDevice": "Opgeslagen apparaat (nu offline)",
+    "refreshDevices": "Apparaten zoeken",
+    "fallbackHint": "Speelt de tv-pagina niet op de laptop? Kies dan een speaker, telefoon of Chromecast met Spotify die aan staat.",
+    "diagnose": "Spotify testen",
+    "importRound": "Ronde uit Spotify-playlist",
+    "pickPlaylist": "Kies een playlist",
+    "trackCount_one": "{{count}} nummer",
+    "trackCount_other": "{{count}} nummers",
+    "notOwned": "van {{owner}}: kopieer hem eerst naar een eigen playlist",
+    "importHint": "Elke vraag wordt “Wie is de artiest?” met een willekeurig fragment van 20 seconden. Je kunt alles daarna aanpassen.",
+    "addRound_one": "{{count}} vraag toevoegen",
+    "addRound_other": "{{count}} vragen toevoegen",
+    "errors": {
+      "spotify_not_configured": "Vul eerst de Spotify Client ID in (Beheer → Instellingen).",
+      "spotify_not_connected": "Spotify is niet gekoppeld. Koppel het opnieuw in Beheer → Instellingen.",
+      "spotify_auth_failed": "Spotify weigerde de koppeling. Koppel opnieuw.",
+      "spotify_invalid_state": "Deze koppelpoging is verlopen. Probeer het opnieuw.",
+      "spotify_premium_required": "Spotify Premium is nodig om af te spelen.",
+      "spotify_no_device": "Geen Spotify-speler gevonden. Open de tv-pagina op de laptop of kies een reserve-apparaat.",
+      "spotify_quota": "Spotify-limiet bereikt. Wacht even.",
+      "spotify_not_found": "Dit nummer of deze playlist bestaat niet (meer).",
+      "spotify_forbidden": "Spotify staat dit niet toe voor deze app.",
+      "spotify_api_error": "Spotify gaf een fout.",
+      "spotify_player_unsupported": "Deze browser kan Spotify niet afspelen (DRM). Gebruik Chrome op de laptop.",
+      "spotify_sdk_unavailable": "De Spotify-speler kon niet laden."
     }
   }
 }

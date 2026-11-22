@@ -145,7 +145,6 @@
       "blur": "Blurred to sharp"
     },
     "spotifyUri": "Spotify track (link or URI)",
-    "spotifyLater": "Spotify playback arrives in Phase 4.",
     "startSec": "Start (s)",
     "endSec": "End (s)",
     "youtubeUrl": "YouTube link or video ID",
@@ -189,7 +188,8 @@
     "sequenceImages": "Images ({{count}}, 5 to 20)",
     "imageYes": "Yes",
     "imageNo": "No",
-    "addImages": "Add images"
+    "addImages": "Add images",
+    "spotifyHint": "Paste a link from Spotify (Share → Copy song link). The TV never shows title or artist."
   },
   "game": {
     "errors": {
@@ -252,7 +252,19 @@
       "not_found": "This video no longer exists.",
       "invalid_id": "Invalid YouTube link.",
       "player_error": "The YouTube player reported an error.",
-      "youtube_api_unavailable": "YouTube can't be reached."
+      "youtube_api_unavailable": "YouTube can't be reached.",
+      "spotify_not_configured": "Enter the Spotify Client ID first (Admin → Settings).",
+      "spotify_not_connected": "Spotify isn't connected. Connect it again in Admin → Settings.",
+      "spotify_auth_failed": "Spotify refused the connection. Connect again.",
+      "spotify_invalid_state": "This connection attempt expired. Try again.",
+      "spotify_premium_required": "Spotify Premium is needed to play.",
+      "spotify_no_device": "No Spotify player found. Open the TV page on the laptop or pick a fallback device.",
+      "spotify_quota": "Spotify limit reached. Wait a moment.",
+      "spotify_not_found": "This track or playlist no longer exists.",
+      "spotify_forbidden": "Spotify doesn't allow this for this app.",
+      "spotify_api_error": "Spotify returned an error.",
+      "spotify_player_unsupported": "This browser can't play Spotify (DRM). Use Chrome on the laptop.",
+      "spotify_sdk_unavailable": "The Spotify player couldn't load."
     },
     "clickToPlay": "Click to play",
     "flitsreeks": "Rapid sequence",
@@ -265,7 +277,8 @@
     "no": "No",
     "ipHintLoopback": "YouTube music videos often won't play when the TV is opened via an IP address. Open the TV via localhost.",
     "ipHintLan": "YouTube music videos often won't play via an IP address. Open the TV on the laptop itself at http://localhost:8080/tv.",
-    "ipHintSwitch": "Switch to localhost"
+    "ipHintSwitch": "Switch to localhost",
+    "spotifyClick": "Click this screen once to allow Spotify sound"
   },
   "join": {
     "title": "Join",
@@ -487,6 +500,52 @@
       "invalid_json": "A JSON file in the package is invalid.",
       "invalid_quiz": "quiz.json is not valid:",
       "quiz_not_found": "The quiz to replace no longer exists."
+    }
+  },
+  "spotify": {
+    "connectedAs": "Connected as {{name}}",
+    "notConnected": "Not connected",
+    "step1": "Create an app in the Spotify dashboard (select Web API and Web Playback SDK):",
+    "step2": "Add this redirect URI to the app, exactly as shown:",
+    "step3": "Paste the app's Client ID below and save.",
+    "step4": "Click Connect Spotify, on the laptop itself. You only do this once.",
+    "clientId": "Client ID",
+    "redirectUri": "Redirect URI",
+    "redirectHint": "Leave empty for the default (SPOTIFY_REDIRECT_URI). Spotify only accepts 127.0.0.1, not localhost. Change it if Docker runs on another port.",
+    "connect": "Connect Spotify",
+    "disconnect": "Disconnect",
+    "waiting": "Finish signing in in the new tab…",
+    "laptopOnly": "Connecting only works from a browser on the laptop itself: Spotify sends you back to 127.0.0.1.",
+    "tvPlayer": "TV player",
+    "tvOnline": "Kwistig TV is ready to play",
+    "tvOffline": "not active (open the TV page on the laptop)",
+    "fallbackDevice": "Fallback device",
+    "noFallback": "None",
+    "savedDevice": "Saved device (offline now)",
+    "refreshDevices": "Find devices",
+    "fallbackHint": "TV page not playing on the laptop? Pick a speaker, phone or Chromecast that has Spotify on.",
+    "diagnose": "Test Spotify",
+    "importRound": "Round from a Spotify playlist",
+    "pickPlaylist": "Pick a playlist",
+    "trackCount_one": "{{count}} track",
+    "trackCount_other": "{{count}} tracks",
+    "notOwned": "by {{owner}}: copy it to a playlist of your own first",
+    "importHint": "Each question becomes “Who is the artist?” with a random 20-second fragment. You can change everything afterwards.",
+    "addRound_one": "Add {{count}} question",
+    "addRound_other": "Add {{count}} questions",
+    "errors": {
+      "spotify_not_configured": "Enter the Spotify Client ID first (Admin → Settings).",
+      "spotify_not_connected": "Spotify isn't connected. Connect it again in Admin → Settings.",
+      "spotify_auth_failed": "Spotify refused the connection. Connect again.",
+      "spotify_invalid_state": "This connection attempt expired. Try again.",
+      "spotify_premium_required": "Spotify Premium is needed to play.",
+      "spotify_no_device": "No Spotify player found. Open the TV page on the laptop or pick a fallback device.",
+      "spotify_quota": "Spotify limit reached. Wait a moment.",
+      "spotify_not_found": "This track or playlist no longer exists.",
+      "spotify_forbidden": "Spotify doesn't allow this for this app.",
+      "spotify_api_error": "Spotify returned an error.",
+      "spotify_player_unsupported": "This browser can't play Spotify (DRM). Use Chrome on the laptop.",
+      "spotify_sdk_unavailable": "The Spotify player couldn't load."
     }
   }
 }

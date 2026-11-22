@@ -198,7 +198,7 @@ export function MediaEditor({
             </Field>
           </div>
           <StartEnd value={value} edit={edit} />
-          <p className="text-xs text-ink-400 sm:col-span-3">{t("editor.spotifyLater")}</p>
+          <p className="text-xs text-ink-400 sm:col-span-3">{t("editor.spotifyHint")}</p>
         </div>
       )}
 

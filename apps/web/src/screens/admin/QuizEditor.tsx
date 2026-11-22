@@ -6,6 +6,7 @@ import { api, errorKey, RequestError } from "../../lib/api";
 import { Field, LocalizedInput, OptionalNumber, setOpt } from "./fields";
 import { IssueList } from "./IssueList";
 import { ItemEditor } from "./ItemEditor";
+import { SpotifyImportButton } from "./SpotifyImport";
 
 type Selection = { type: "quiz" } | { type: "round"; r: number } | { type: "item"; r: number; i: number };
 type Loaded = QuizDoc & { id: number; uid: string };
@@ -322,6 +323,14 @@ export function QuizEditor() {
           <button type="button" className="btn-ghost w-full" onClick={addRound}>
             + {t("editor.addRound")}
           </button>
+          <SpotifyImportButton
+            language={lang}
+            onAdd={(round) => {
+              const r = doc.rounds.length;
+              update((d) => d.rounds.push(round));
+              setSel({ type: "round", r });
+            }}
+          />
         </nav>
 
         {/* Detail panel */}
