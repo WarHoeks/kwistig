@@ -34,7 +34,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
 
 /** i18n key for an error, falling back to the generic message. */
 export function errorKey(err: unknown): string {
-  const known = ["network", "wrong_pin", "too_many_attempts", "pin_required", "quiz_not_found", "invalid_quiz", "invalid_json"];
+  const known = ["network", "wrong_pin", "too_many_attempts", "pin_required", "quiz_not_found", "invalid_quiz", "invalid_json", "session_active"];
   const code = err instanceof RequestError ? err.code : "generic";
   return `errors.${known.includes(code) ? code : "generic"}`;
 }

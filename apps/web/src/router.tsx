@@ -3,6 +3,7 @@ import { AdminLayout } from "./screens/admin/AdminLayout";
 import { QuizLibrary } from "./screens/admin/QuizLibrary";
 import { QuizEditor } from "./screens/admin/QuizEditor";
 import { SettingsPage } from "./screens/admin/SettingsPage";
+import { SessionsPage } from "./screens/admin/SessionsPage";
 import { TvScreen } from "./screens/tv/TvScreen";
 import { HostScreen } from "./screens/host/HostScreen";
 import { JoinScreen } from "./screens/play/JoinScreen";
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
       { index: true, element: <QuizLibrary /> },
       { path: "quiz/:id", element: <QuizEditor /> },
       { path: "settings", element: <SettingsPage /> },
+      { path: "sessions", element: <SessionsPage /> },
     ],
   },
   { path: "*", element: <Navigate to="/host" replace /> },

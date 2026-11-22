@@ -20,6 +20,7 @@ import { setExternalFetch } from "./services/safe-fetch.js";
 import { SpotifyService, type FetchLike } from "./services/spotify.js";
 import { SpotifyPlayback } from "./services/spotify-playback.js";
 import { spotifyRoutes } from "./routes/spotify.js";
+import { sessionRoutes } from "./routes/sessions.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -101,6 +102,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   await app.register(playRoutes, { prefix: "/api" });
   await app.register(mediaApiRoutes, { prefix: "/api/media" });
   await app.register(spotifyRoutes, { prefix: "/api/spotify" });
+  await app.register(sessionRoutes, { prefix: "/api/sessions" });
   await app.register(mediaFileRoutes);
 
   attachHub(app, runner);

@@ -24,6 +24,9 @@ export function AdminLayout() {
                 <Link to="/host" className="text-sm text-ink-200 hover:text-white">
                   {t("host.title")}
                 </Link>
+                <Link to="/admin/sessions" className="text-sm text-ink-200 hover:text-white">
+                  {t("sessions.title")}
+                </Link>
                 <Link to="/admin/settings" className="text-sm text-ink-200 hover:text-white">
                   {t("settings.title")}
                 </Link>
