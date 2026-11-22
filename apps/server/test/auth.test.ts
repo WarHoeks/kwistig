@@ -32,11 +32,20 @@ describe("AttemptLimiter", () => {
     expect(l.blocked("192.168.1.5", 10 * 60_000 + 1)).toBe(false);
   });
 
-  it("keys IPv6 by /64 and has a global cap", () => {
+  it("keys IPv6 by expanded /64", () => {
+    expect(AttemptLimiter.key("2001:db8::1")).toBe("2001:db8:0:0");
+    expect(AttemptLimiter.key("2001:0db8:0000:0000:1::")).toBe("2001:db8:0:0");
+    expect(AttemptLimiter.key("::ffff:192.168.1.4")).toBe("192.168.1.4");
     const l = new AttemptLimiter(10, 50);
     for (let i = 0; i < 10; i++) l.fail(`2001:db8:1:2::${i}`, 0);
-    expect(l.blocked("2001:db8:1:2::ffff", 1)).toBe(true);
-    for (let i = 0; i < 40; i++) l.fail(`10.0.0.${i}`, 0);
-    expect(l.blocked("10.9.9.9", 1)).toBe(true);
+    expect(l.blocked("2001:db8:1:2:0:0:0:ffff", 1)).toBe(true);
+  });
+
+  it("global failures slow attempts down but never block another client", () => {
+    const l = new AttemptLimiter(10, 50);
+    for (let i = 0; i < 50; i++) l.fail(`10.0.0.${i}`, 0);
+    expect(l.blocked("10.9.9.9", 1)).toBe(false);
+    expect(l.delayMs(1)).toBe(2000);
+    expect(l.delayMs(10 * 60_000 + 1)).toBe(0);
   });
 });

@@ -135,16 +135,33 @@ export class AttemptLimiter {
     private readonly windowMs = 10 * 60_000,
   ) {}
 
-  private static key(ip: string): string {
-    if (!ip.includes(":") || ip.startsWith("::ffff:")) return ip;
-    return ip.split(":").slice(0, 4).join(":");
+  /** IPv4 as-is; IPv6 expanded and cut to its /64 prefix. */
+  static key(ip: string): string {
+    if (!ip.includes(":")) return ip;
+    const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(ip);
+    if (mapped) return mapped[1]!;
+    const [head = "", tail = ""] = ip.split("%")[0]!.split("::");
+    const h = head ? head.split(":") : [];
+    const t = ip.includes("::") ? (tail ? tail.split(":") : []) : [];
+    const groups = ip.includes("::") ? [...h, ...Array(8 - h.length - t.length).fill("0"), ...t] : h;
+    return groups
+      .slice(0, 4)
+      .map((g) => g.toLowerCase().replace(/^0+(?=.)/, ""))
+      .join(":");
   }
 
+  /** Hard block for one client that keeps guessing. */
   blocked(ip: string, now = Date.now()): boolean {
     const c = this.perClient.get(AttemptLimiter.key(ip));
-    const clientBlocked = !!c && c.resetAt > now && c.count >= this.maxPerClient;
-    const globalBlocked = this.global.resetAt > now && this.global.count >= this.maxGlobal;
-    return clientBlocked || globalBlocked;
+    return !!c && c.resetAt > now && c.count >= this.maxPerClient;
+  }
+
+  /**
+   * Many failures across all clients slow every attempt down instead of blocking,
+   * so a guest can't lock the real host out.
+   */
+  delayMs(now = Date.now()): number {
+    return this.global.resetAt > now && this.global.count >= this.maxGlobal ? 2000 : 0;
   }
 
   fail(ip: string, now = Date.now()): void {

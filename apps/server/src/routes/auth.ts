@@ -21,6 +21,8 @@ export async function authRoutes(app: FastifyInstance) {
   app.post("/login", async (req, reply) => {
     if (limiter.blocked(req.ip)) throw new HttpError(429, "too_many_attempts");
     const { pin } = parse(LoginBody, req.body);
+    const delay = limiter.delayMs();
+    if (delay) await new Promise((r) => setTimeout(r, delay));
     if (!app.auth.verify(pin)) {
       limiter.fail(req.ip);
       throw new HttpError(401, "wrong_pin");
