@@ -22,7 +22,9 @@
       "nl": "Dutch",
       "en": "English"
     },
-    "comingSoon": "This screen arrives in a later phase."
+    "comingSoon": "This screen arrives in a later phase.",
+    "confirm": "Continue",
+    "leave": "Leave"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

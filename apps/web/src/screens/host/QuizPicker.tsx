@@ -4,10 +4,12 @@ import type { QuizSummary } from "@kwistig/shared";
 import { api } from "../../lib/api";
 import { useHost } from "./HostScreen";
 import { PackageUpload } from "../../components/PackageUpload";
+import { useConfirm } from "../../components/ConfirmDialog";
 
 export function QuizPicker({ onStarted }: { onStarted: () => void }) {
   const { t } = useTranslation();
   const { send, view } = useHost();
+  const confirm = useConfirm();
   const [quizzes, setQuizzes] = useState<QuizSummary[] | null>(null);
 
   useEffect(() => {
@@ -15,12 +17,12 @@ export function QuizPicker({ onStarted }: { onStarted: () => void }) {
   }, []);
 
   const start = async (q: QuizSummary) => {
-    if (view && view.phase !== "finished" && !confirm(t("host.confirmStart", { title: q.title }))) return;
+    if (view && view.phase !== "finished" && !(await confirm(t("host.confirmStart", { title: q.title }), { confirmLabel: t("host.start") }))) return;
     if (await send({ type: "startQuiz", quizId: q.id })) onStarted();
   };
 
   const end = async () => {
-    if (confirm(t("host.confirmEnd"))) await send({ type: "endSession" });
+    if (await confirm(t("host.confirmEnd"), { confirmLabel: t("host.endSession"), danger: true })) await send({ type: "endSession" });
   };
 
   return (

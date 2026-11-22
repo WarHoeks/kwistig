@@ -53,6 +53,9 @@ test("full game: TV, host and two teams", async ({ browser }) => {
     .first()
     .getByRole("button", { name: "Start" })
     .click();
+  // A game from an earlier run may still be going: confirm stopping it.
+  const confirmOk = host.getByTestId("confirm-ok");
+  if (await confirmOk.isVisible().catch(() => false)) await confirmOk.click();
   await expect(host.getByText("Teams melden zich aan")).toBeVisible();
 
   const tv = await newPage(browser, TV);
@@ -233,4 +236,16 @@ test("full game: TV, host and two teams", async ({ browser }) => {
   await expect(tv.getByText("Winnaar!")).toBeVisible();
   await expect(kim.getByText("Klaar! Jullie eindigden als")).toBeVisible();
   await shot(tv, "12-tv-final");
+
+  // ---------------------------------------------------------------- end the quiz (in-app confirmation)
+  await host.getByRole("button", { name: "Quizzen" }).click();
+  await host.getByRole("button", { name: "Quiz beëindigen" }).click();
+  await expect(host.getByRole("alertdialog")).toContainText("De quiz beëindigen?");
+  await host.getByRole("alertdialog").getByRole("button", { name: "Annuleren" }).click();
+  await expect(tv.getByRole("heading", { name: "Eindstand" })).toBeVisible(); // cancelled: still running
+  await host.getByRole("button", { name: "Quiz beëindigen" }).click();
+  await host.getByTestId("confirm-ok").click();
+  await expect(host.getByText("Er loopt geen quiz")).toBeVisible();
+  await expect(tv.getByText("Wacht op de quizmaster")).toBeVisible();
+  await expect(kim.getByText("Deze quiz is afgelopen")).toBeVisible();
 });

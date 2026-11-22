@@ -6,10 +6,12 @@ import { api, errorKey, RequestError } from "../../lib/api";
 import { intlLocale } from "../../i18n";
 import { IssueList } from "./IssueList";
 import { PackageUpload } from "../../components/PackageUpload";
+import { useConfirm } from "../../components/ConfirmDialog";
 
 export function QuizLibrary() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const [quizzes, setQuizzes] = useState<QuizSummary[]>();
   const [error, setError] = useState<{ message: string; issues: RequestError["issues"] }>();
   const [notice, setNotice] = useState<string>();
@@ -61,7 +63,7 @@ export function QuizLibrary() {
   };
 
   const remove = async (q: QuizSummary) => {
-    if (!confirm(t("admin.confirmDelete", { title: q.title }))) return;
+    if (!(await confirm(t("admin.confirmDelete", { title: q.title }), { confirmLabel: t("common.delete"), danger: true }))) return;
     await api(`/quizzes/${q.id}`, { method: "DELETE" }).catch(fail);
     load();
   };

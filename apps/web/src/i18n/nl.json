@@ -22,7 +22,9 @@
       "nl": "Nederlands",
       "en": "Engels"
     },
-    "comingSoon": "Dit scherm komt in een volgende fase."
+    "comingSoon": "Dit scherm komt in een volgende fase.",
+    "confirm": "Doorgaan",
+    "leave": "Weggaan"
   },
   "errors": {
     "generic": "Er ging iets mis. Probeer het opnieuw.",

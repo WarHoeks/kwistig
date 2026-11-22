@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useConfirm } from "../../components/ConfirmDialog";
 import { Link, useBlocker, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { formatIssues, primaryText, Quiz, type Item, type Language, type Quiz as QuizDoc } from "@kwistig/shared";
@@ -36,14 +37,19 @@ export function QuizEditor() {
       .catch((err) => setError({ message: t(errorKey(err)), issues: [] }));
   }, [id, t]);
 
-  // Warn before leaving with unsaved changes.
+  // Warn before leaving with unsaved changes (asked once per blocked navigation).
+  const confirm = useConfirm();
   const blocker = useBlocker(dirty);
+  const asking = useRef(false);
   useEffect(() => {
-    if (blocker.state === "blocked") {
-      if (confirm(t("common.confirmLeave"))) blocker.proceed();
-      else blocker.reset();
-    }
-  }, [blocker, t]);
+    if (blocker.state !== "blocked" || asking.current) return;
+    asking.current = true;
+    void confirm(t("common.confirmLeave"), { confirmLabel: t("common.leave"), danger: true }).then((ok) => {
+      asking.current = false;
+      if (ok) blocker.proceed?.();
+      else blocker.reset?.();
+    });
+  }, [blocker, t, confirm]);
   useEffect(() => {
     if (!dirty) return;
     const h = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -150,9 +156,11 @@ export function QuizEditor() {
 
   const deleteRound = (r: number) => {
     const title = primaryText(doc.rounds[r]!.title, lang);
-    if (!confirm(t("editor.confirmDeleteRound", { title }))) return;
-    update((d) => d.rounds.splice(r, 1));
-    setSel({ type: "quiz" });
+    void confirm(t("editor.confirmDeleteRound", { title }), { confirmLabel: t("editor.deleteRound"), danger: true }).then((ok) => {
+      if (!ok) return;
+      update((d) => d.rounds.splice(r, 1));
+      setSel({ type: "quiz" });
+    });
   };
 
   const deleteItem = (r: number, i: number) => {

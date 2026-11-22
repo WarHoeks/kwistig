@@ -4,6 +4,7 @@ import type { HostView } from "@kwistig/shared";
 import { TeamAvatar } from "../../components/TeamAvatar";
 import { formatScore } from "../../lib/text";
 import { useHost } from "./HostScreen";
+import { useConfirm } from "../../components/ConfirmDialog";
 
 type TeamDetail = HostView["teamsDetail"][number];
 
@@ -25,6 +26,7 @@ export function HostTeams() {
 function TeamCard({ team, others }: { team: TeamDetail; others: TeamDetail[] }) {
   const { t, i18n } = useTranslation();
   const { send } = useHost();
+  const confirm = useConfirm();
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(team.name);
 
@@ -101,7 +103,11 @@ function TeamCard({ team, others }: { team: TeamDetail; others: TeamDetail[] }) 
                 type="button"
                 className="px-1 text-red-300"
                 aria-label={t("host.removePhone")}
-                onClick={() => confirm(t("host.confirmRemovePhone")) && void send({ type: "removePlayer", playerId: p.id })}
+                onClick={async () => {
+                  if (await confirm(t("host.confirmRemovePhone"), { confirmLabel: t("host.removePhone"), danger: true })) {
+                    void send({ type: "removePlayer", playerId: p.id });
+                  }
+                }}
               >
                 ✕
               </button>
@@ -118,9 +124,10 @@ function TeamCard({ team, others }: { team: TeamDetail; others: TeamDetail[] }) 
             aria-label={t("host.mergeInto")}
             onChange={(e) => {
               const into = others.find((o) => o.id === Number(e.target.value));
-              if (into && confirm(t("host.confirmMerge", { from: team.name, into: into.name }))) {
-                void send({ type: "mergeTeams", fromId: team.id, intoId: into.id });
-              }
+              if (!into) return;
+              void confirm(t("host.confirmMerge", { from: team.name, into: into.name })).then((ok) => {
+                if (ok) void send({ type: "mergeTeams", fromId: team.id, intoId: into.id });
+              });
             }}
           >
             <option value="">{t("host.mergeInto")}</option>
@@ -134,7 +141,11 @@ function TeamCard({ team, others }: { team: TeamDetail; others: TeamDetail[] }) 
         <button
           type="button"
           className="btn-danger btn-sm"
-          onClick={() => confirm(t("host.confirmRemoveTeam", { name: team.name })) && void send({ type: "removeTeam", teamId: team.id })}
+          onClick={async () => {
+            if (await confirm(t("host.confirmRemoveTeam", { name: team.name }), { confirmLabel: t("host.removeTeam"), danger: true })) {
+              void send({ type: "removeTeam", teamId: team.id });
+            }
+          }}
         >
           {t("host.removeTeam")}
         </button>

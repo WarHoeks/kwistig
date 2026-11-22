@@ -4,9 +4,12 @@ import { RouterProvider } from "react-router-dom";
 import "./i18n";
 import "./index.css";
 import { router } from "./router";
+import { ConfirmProvider } from "./components/ConfirmDialog";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <ConfirmProvider>
+      <RouterProvider router={router} />
+    </ConfirmProvider>
   </StrictMode>,
 );

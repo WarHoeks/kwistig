@@ -59,6 +59,9 @@ test("media package, image reveal and flitsreeks", async ({ browser }) => {
   await expect(tabs.or(host.getByRole("button", { name: "Start" })).first()).toBeVisible();
   if (await tabs.isVisible()) await tabs.click();
   await host.getByRole("listitem").filter({ hasText: "Kwistig proefquiz" }).first().getByRole("button", { name: "Start" }).click();
+  const confirmOk = host.getByTestId("confirm-ok");
+  await host.waitForTimeout(300);
+  if (await confirmOk.isVisible()) await confirmOk.click();
 
   const tv = await newPage(browser, { viewport: { width: 1920, height: 1080 } });
   await signIn(tv, "/tv");
