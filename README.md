@@ -18,7 +18,7 @@ Everything is stored in `./data`: the SQLite database, uploaded media and team p
 
 ### 1. Host PIN
 
-Change `HOST_PIN` in `docker-compose.yml` before the first quiz night. It protects `/admin`, `/host` and the TV. A PIN saved later in admin settings overrides the environment value, and changing the PIN signs out every device.
+Change `HOST_PIN` in `docker-compose.yml` before the first quiz night, to something of at least 6 characters: guests on your Wi-Fi can reach the login page, and wrong attempts are only rate-limited per device. It protects `/admin`, `/host` and the TV. A PIN saved later in admin settings overrides the environment value, and changing the PIN signs out every device.
 
 ### 2. Firewall
 

@@ -52,12 +52,25 @@ describe("AttemptLimiter", () => {
         }),
       ),
     );
-    // At most two in flight per client; the rest are refused without a check.
-    expect(checks).toBeLessThanOrEqual(10);
-    expect(results.filter((r) => r === "blocked").length).toBeGreaterThanOrEqual(20);
+    // Never more than the per-client cap of checks; the rest are refused unchecked.
+    expect(checks).toBe(10);
+    expect(results.filter((r) => r === "blocked").length).toBe(20);
     for (let i = 0; i < 20; i++) await l.attempt("192.168.1.9", () => (checks++, false));
     expect(checks).toBe(10);
+    // Another client is unaffected.
+    expect(await l.attempt("192.168.1.10", () => true)).toBe("ok");
   });
+
+  it("while slowed down, a client gets one attempt in flight at a time", async () => {
+    const l = new AttemptLimiter(10, 1);
+    l.fail("10.0.0.1"); // trips the global slowdown
+    let checks = 0;
+    const results = await Promise.all(
+      Array.from({ length: 5 }, () => l.attempt("10.0.0.2", () => (checks++, false))),
+    );
+    expect(checks).toBe(1);
+    expect(results.filter((r) => r === "blocked")).toHaveLength(4);
+  }, 10_000);
 
   it("global failures slow attempts down but never block another client", () => {
     const l = new AttemptLimiter(10, 50);

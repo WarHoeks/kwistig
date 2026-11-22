@@ -164,36 +164,27 @@ export class AttemptLimiter {
     return this.global.resetAt > now && this.global.count >= this.maxGlobal ? 2000 : 0;
   }
 
-  private queue: Promise<unknown> = Promise.resolve();
-  private pending = new Map<string, number>();
+  private readonly inFlight = new Set<string>();
 
   /**
-   * Runs PIN checks one at a time. The block check, the optional delay and the
-   * failure record all happen inside the queue, so parallel requests can't slip
-   * past the limit, and under attack total throughput is one guess per delay.
+   * One attempt at a time per client: a second parallel request from the same
+   * client is refused, so the block check and the failure record can't race.
+   * The global slowdown is applied per request, outside any shared lock, so one
+   * client can never delay another's attempt beyond the fixed 2 s.
    */
   async attempt(ip: string, check: () => boolean): Promise<"ok" | "wrong" | "blocked"> {
     const key = AttemptLimiter.key(ip);
-    const inFlight = this.pending.get(key) ?? 0;
-    if (inFlight >= 2) return "blocked";
-    this.pending.set(key, inFlight + 1);
-    const run = async () => {
-      try {
-        if (this.blocked(ip)) return "blocked" as const;
-        const delay = this.delayMs();
-        if (delay) await new Promise((r) => setTimeout(r, delay));
-        if (check()) return "ok" as const;
-        this.fail(ip);
-        return "wrong" as const;
-      } finally {
-        const n = (this.pending.get(key) ?? 1) - 1;
-        if (n <= 0) this.pending.delete(key);
-        else this.pending.set(key, n);
-      }
-    };
-    const p = this.queue.then(run, run);
-    this.queue = p.catch(() => undefined);
-    return p;
+    if (this.inFlight.has(key) || this.blocked(ip)) return "blocked";
+    this.inFlight.add(key);
+    try {
+      const delay = this.delayMs();
+      if (delay) await new Promise((r) => setTimeout(r, delay));
+      if (check()) return "ok";
+      this.fail(ip);
+      return "wrong";
+    } finally {
+      this.inFlight.delete(key);
+    }
   }
 
   fail(ip: string, now = Date.now()): void {
