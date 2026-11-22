@@ -35,7 +35,9 @@ async function start() {
 const latest = new WeakMap<Socket, unknown>();
 
 function socket(url: string, auth: object, cookie?: string) {
-  const s = connect(url, { auth, extraHeaders: cookie ? { cookie } : {}, transports: ["websocket"], forceNew: true });
+  const headers: Record<string, string> = { origin: url };
+  if (cookie) headers.cookie = cookie;
+  const s = connect(url, { auth, extraHeaders: headers, transports: ["websocket"], forceNew: true });
   s.on("view", (v: unknown) => latest.set(s, v));
   sockets.push(s);
   return s;
@@ -105,10 +107,18 @@ describe("live game over sockets", () => {
     await nextView<TeamView>(phone1);
     await nextView<TeamView>(phone2);
 
-    // Unauthenticated TV is refused.
-    const rogue = connect(url, { auth: { role: "tv" }, transports: ["websocket"], forceNew: true });
+    // Unauthenticated TV is refused, and so is a host cookie sent from another site.
+    const rogue = connect(url, { auth: { role: "tv" }, extraHeaders: { origin: url }, transports: ["websocket"], forceNew: true });
     sockets.push(rogue);
     await new Promise<void>((resolve) => rogue.on("connect_error", (e) => (expect(e.message).toBe("pin_required"), resolve())));
+    const crossSite = connect(url, {
+      auth: { role: "host" },
+      extraHeaders: { origin: "http://evil.example", cookie },
+      transports: ["websocket"],
+      forceNew: true,
+    });
+    sockets.push(crossSite);
+    await new Promise<void>((resolve) => crossSite.on("connect_error", (e) => (expect(e.message).toBe("forbidden"), resolve())));
 
     await send(host, { type: "beginQuiz" });
     await send(host, { type: "next" }); // first question (MC)

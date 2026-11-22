@@ -7,6 +7,15 @@ import { hostView, teamView, tvView } from "./project.js";
 import type { GameRunner } from "./runner.js";
 
 type Role = "tv" | "host" | "player";
+
+function sameOrigin(origin: string | undefined, host: string | undefined): boolean {
+  if (!origin || !host) return false;
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
 interface SocketData {
   role: Role;
   token?: string;
@@ -64,6 +73,10 @@ export function attachHub(app: FastifyInstance, runner: GameRunner) {
   io.use((socket, next) => {
     const auth = (socket.handshake.auth ?? {}) as { role?: unknown; token?: unknown };
     if (auth.role === "tv" || auth.role === "host") {
+      // Block cross-site WebSocket hijacking: the page must come from this server.
+      if (!sameOrigin(socket.handshake.headers.origin, socket.handshake.headers.host)) {
+        return next(new Error("forbidden"));
+      }
       const ok = app.auth.isHostCookieHeader(socket.handshake.headers.cookie, (v) => app.unsignCookie(v));
       if (!ok) return next(new Error("pin_required"));
       socket.data.role = auth.role;
