@@ -94,7 +94,10 @@ export function correctValue(run: RunItem): AnswerValue | null {
       return item.correct;
     case "open":
       return item.acceptedAnswers[0] ?? null;
-    default:
+    case "rapid_sequence":
+      // One character per image: "1" = yes (press), "0" = no.
+      return item.images.map((img) => (img.yes ? "1" : "0")).join("");
+    case "buzzer":
       return null;
   }
 }

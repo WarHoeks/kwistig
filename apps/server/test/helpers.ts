@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { buildApp } from "../src/app.js";
 import { loadConfig } from "../src/config.js";
@@ -8,6 +10,8 @@ export async function testApp() {
   const config = loadConfig({
     HOST_PIN: TEST_PIN,
     LOG_LEVEL: "silent",
+    EXTERNAL_FETCH: "false",
+    DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), "kwistig-test-")),
     MIGRATIONS_DIR: path.resolve(import.meta.dirname, "../drizzle"),
     WEB_DIST: path.resolve(import.meta.dirname, "__no_web__"),
   });

@@ -42,7 +42,7 @@ export function questionCount(run: readonly RunItem[]): number {
 }
 
 /** Answer types the Phase 2 game supports on phones. */
-export const PLAYABLE_TYPES = ["multiple_choice", "true_false", "open", "number"] as const;
+export const PLAYABLE_TYPES = ["multiple_choice", "true_false", "open", "number", "rapid_sequence"] as const;
 export type PlayableType = (typeof PLAYABLE_TYPES)[number];
 export const isPlayable = (q: Question): q is Extract<Question, { answerType: PlayableType }> =>
   (PLAYABLE_TYPES as readonly string[]).includes(q.answerType);

@@ -38,8 +38,22 @@ export const HostIntent = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("mergeTeams"), fromId: Id, intoId: Id }),
   z.strictObject({ type: z.literal("movePlayer"), playerId: Id, teamId: Id }),
   z.strictObject({ type: z.literal("removePlayer"), playerId: Id }),
+  // Media on the TV: play/resume, pause, replay from the start marker, mute.
+  z.strictObject({ type: z.literal("mediaPlay") }),
+  z.strictObject({ type: z.literal("mediaPause") }),
+  z.strictObject({ type: z.literal("mediaReplay") }),
+  z.strictObject({ type: z.literal("mediaMute"), on: z.boolean() }),
+  // Flitsreeks reveal: show one image large on the TV, or the whole grid (null).
+  z.strictObject({ type: z.literal("spotlight"), index: z.number().int().min(0).max(19).nullable() }),
 ]);
 export type HostIntent = z.infer<typeof HostIntent>;
+
+/** What the TV reports back about playback. */
+export const TvIntent = z.discriminatedUnion("type", [
+  z.strictObject({ type: z.literal("mediaEnded"), seq: z.number().int().min(0) }),
+  z.strictObject({ type: z.literal("mediaError"), seq: z.number().int().min(0), code: z.string().max(40) }),
+]);
+export type TvIntent = z.infer<typeof TvIntent>;
 
 export const AnswerInput = z.union([
   z.number().finite(),
@@ -52,6 +66,8 @@ export const TeamIntent = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("vote"), value: AnswerInput }),
   /** Take this phone's vote back. */
   z.strictObject({ type: z.literal("retractVote") }),
+  /** Flitsreeks button. The server decides which image it counts for. */
+  z.strictObject({ type: z.literal("press") }),
 ]);
 export type TeamIntent = z.infer<typeof TeamIntent>;
 
@@ -73,6 +89,9 @@ export const GAME_ERRORS = [
   "quiz_not_found",
   "quiz_not_playable",
   "forbidden",
+  "no_media",
+  "not_running",
+  "already_pressed",
 ] as const;
 export type GameErrorCode = (typeof GAME_ERRORS)[number];
 

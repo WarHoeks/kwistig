@@ -9,6 +9,7 @@ import { ItemEditor } from "./ItemEditor";
 
 type Selection = { type: "quiz" } | { type: "round"; r: number } | { type: "item"; r: number; i: number };
 type Loaded = QuizDoc & { id: number; uid: string };
+type MediaWarning = { ref: string; message: string };
 
 function stripIds({ id: _id, uid: _uid, ...doc }: Loaded): QuizDoc {
   return doc;
@@ -22,6 +23,7 @@ export function QuizEditor() {
   const [sel, setSel] = useState<Selection>({ type: "quiz" });
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number>();
+  const [warnings, setWarnings] = useState<MediaWarning[]>([]);
   const [error, setError] = useState<{ message: string; issues: RequestError["issues"] }>();
   const [drag, setDrag] = useState<{ r: number; i: number }>();
   // Bumped when an item moves, so its editor remounts with fresh local state.
@@ -69,7 +71,8 @@ export function QuizEditor() {
     setSaving(true);
     setError(undefined);
     try {
-      const q = await api<Loaded>(`/quizzes/${id}`, { method: "PUT", body: doc });
+      const { warnings: w = [], ...q } = await api<Loaded & { warnings?: MediaWarning[] }>(`/quizzes/${id}`, { method: "PUT", body: doc });
+      setWarnings(w);
       setDoc(stripIds(q));
       setDirty(false);
       setSavedAt(Date.now());
@@ -178,6 +181,18 @@ export function QuizEditor() {
         </div>
       </div>
 
+      {warnings.length > 0 && (
+        <div className="mb-4 rounded-lg border border-gold-400/40 bg-gold-400/10 p-4 text-sm text-gold-300" role="status">
+          <p className="font-semibold">{t("editor.mediaWarnings")}</p>
+          <ul className="mt-1 space-y-0.5 font-mono">
+            {warnings.map((w) => (
+              <li key={w.ref}>
+                {w.ref}: {t(`editor.mediaErrors.${w.message}`, { defaultValue: w.message })}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {error && (
         <div className="mb-4">
           <IssueList message={error.message} issues={error.issues} onClose={() => setError(undefined)} />

@@ -1,4 +1,4 @@
-import type { Item, Language, LocalizedText, Slide } from "./quiz.js";
+import type { Item, Language, LocalizedText } from "./quiz.js";
 
 /**
  * Game state as the server stores it, and the per-role views it sends.
@@ -69,6 +69,32 @@ export interface ItemRun {
   /** Resolved team answers, keyed by team id. Filled at lock. */
   answers: Record<string, AnswerRec>;
   timer: TimerState | null;
+  /** Flitsreeks: timing once started. */
+  seq?: SequenceState;
+  /** Flitsreeks: first press per team per image, judged by server receive time. */
+  presses?: Record<string, Record<string, { playerId: number; at: number }>>;
+  /** Flitsreeks reveal: image the host spotlights on the TV. */
+  spotlight?: number | null;
+}
+
+/**
+ * Playback of the current item's audio/video. The host sends commands, the TV
+ * plays and reports "ended"/"error" back. `seq` increases on every (re)start so
+ * the TV knows to load the clip from its start marker again.
+ */
+export interface MediaPlayback {
+  cursor: number;
+  slot: "question" | "reveal";
+  status: "idle" | "playing" | "paused" | "ended" | "error";
+  seq: number;
+  muted: boolean;
+  error?: string;
+}
+
+/** Fetched once per news URL when the session starts. */
+export interface NewsInfo {
+  headline: string | null;
+  image: string | null;
 }
 
 export interface Overlay {
@@ -94,6 +120,10 @@ export interface GameState {
   adjustments: Record<string, number>;
   overlay: Overlay;
   autoLock: boolean;
+  /** Playback state of the current item's media; absent in older snapshots. */
+  media?: MediaPlayback;
+  /** Cached news headlines and images by URL; absent in older snapshots. */
+  news?: Record<string, NewsInfo>;
 }
 
 // ---------------------------------------------------------------- views
@@ -108,6 +138,24 @@ export interface PublicTeam {
   rank: number;
 }
 
+/**
+ * Media as the TV may see it before reveal: image URLs and effects, a YouTube id
+ * with its markers, a news headline with the word blanked. Never Spotify track
+ * info, never the blanked word.
+ */
+export type PublicMedia =
+  | { type: "image"; src: string; reveal: "none" | "pixelate" | "zoom" | "blur"; play: "before" | "with" }
+  | {
+      type: "youtube";
+      videoId: string | null;
+      startSec?: number;
+      endSec?: number;
+      hideVideo: boolean;
+      play: "before" | "with";
+    }
+  | { type: "spotify"; startSec?: number; endSec?: number; play: "before" | "with" }
+  | { type: "news"; headline: string | null; image: string | null; play: "before" | "with" };
+
 /** Question/slide content that is safe to show before reveal. */
 export type PublicItem =
   | {
@@ -117,7 +165,9 @@ export type PublicItem =
       roundTitle: LocalizedText;
       title: LocalizedText;
       body?: LocalizedText;
-      background?: Slide["background"];
+      /** Colour, or a browser URL for a background image. */
+      background?: { color: string } | { image: string };
+      media?: PublicMedia;
       show: "content" | "scoreboard";
       countdownSec?: number;
     }
@@ -134,6 +184,9 @@ export type PublicItem =
       unit?: LocalizedText;
       points: number;
       timeLimitSec?: number;
+      media?: PublicMedia;
+      /** Flitsreeks only: the images in order (no yes/no, no captions). */
+      sequence?: { images: string[]; secondsPerImage: number; buttonLabel: LocalizedText };
     };
 
 /** Sent only once an item is revealed. */
@@ -142,6 +195,12 @@ export interface RevealInfo {
   correct: AnswerValue;
   acceptedAnswers?: string[];
   explanation?: LocalizedText;
+  /** Media played at reveal, if any. */
+  revealMedia?: PublicMedia;
+  /** For a news question: the full headline. */
+  headline?: string;
+  /** Flitsreeks: every image with its answer and how many teams pressed. */
+  images?: { src: string; yes: boolean; caption?: LocalizedText; presses: number }[];
   results: { teamId: number; value: AnswerValue | null; verdict: Verdict; points: number }[];
 }
 
@@ -161,6 +220,20 @@ export interface CommonView {
   /** Team ids that have at least one vote or an answer for the current item. */
   answered: number[];
   totalItems: number;
+  /** Playback of the current item's audio/video, if it has any. */
+  media: MediaPlayback | null;
+  /** Flitsreeks timing, once the sequence has started. */
+  sequence: SequenceState | null;
+  /** Flitsreeks reveal: image the host is spotlighting, if any. */
+  spotlight: number | null;
+}
+
+/** Server-timed flitsreeks: image i is on screen from startAt + i·ms to startAt + (i+1)·ms. */
+export interface SequenceState {
+  startAt: number;
+  ms: number;
+  count: number;
+  graceMs: number;
 }
 
 export type TvView = CommonView;
@@ -189,6 +262,8 @@ export interface TeamView extends CommonView {
   myVote: AnswerValue | null;
   /** Set once the question is locked. */
   answer: TeamAnswerView | null;
+  /** Flitsreeks: images this team has pressed on. */
+  pressed: number[];
   /** Only after reveal. */
   result: { verdict: Verdict; points: number } | null;
 }

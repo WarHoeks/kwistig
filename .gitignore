@@ -8,3 +8,4 @@ playwright-report/
 .env
 .claude/settings.local.json
 docker-compose.override.yml
+samples/*.zip

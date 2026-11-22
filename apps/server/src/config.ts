@@ -20,6 +20,11 @@ const Env = z.object({
   DATA_DIR: z.string().default(path.resolve(process.cwd(), "data")),
   WEB_DIST: z.string().default(path.resolve(here, "../../web/dist")),
   MIGRATIONS_DIR: z.string().default(path.resolve(here, "../drizzle")),
+  /** Set to "false" to never fetch image URLs, news or YouTube checks from the internet. */
+  EXTERNAL_FETCH: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
 });
 

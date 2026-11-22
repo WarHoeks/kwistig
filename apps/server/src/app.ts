@@ -12,8 +12,11 @@ import { quizRoutes } from "./routes/quizzes.js";
 import { schemaRoutes } from "./routes/schema.js";
 import { playRoutes } from "./routes/play.js";
 import { settingsRoutes } from "./routes/settings.js";
+import { mediaApiRoutes, mediaFileRoutes } from "./routes/media.js";
 import { GameRunner } from "./game/runner.js";
 import { attachHub } from "./game/hub.js";
+import { MediaStore } from "./services/media.js";
+import { setExternalFetch } from "./services/safe-fetch.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -21,6 +24,7 @@ declare module "fastify" {
     auth: HostAuth;
     config: Config;
     game: GameRunner;
+    media: MediaStore;
   }
 }
 
@@ -42,7 +46,10 @@ export async function buildApp({ config, dbFile }: BuildOptions): Promise<Fastif
   app.decorate("db", db);
   app.decorate("auth", auth);
   app.decorate("config", config);
-  const runner = new GameRunner(db, config.DATA_DIR, app.log);
+  setExternalFetch(config.EXTERNAL_FETCH);
+  const media = new MediaStore(db, config.DATA_DIR);
+  app.decorate("media", media);
+  const runner = new GameRunner(db, config.DATA_DIR, app.log, media);
   app.decorate("game", runner);
   app.addHook("onClose", async () => db.$client.close());
 
@@ -70,6 +77,8 @@ export async function buildApp({ config, dbFile }: BuildOptions): Promise<Fastif
   await app.register(quizRoutes, { prefix: "/api/quizzes" });
   await app.register(settingsRoutes, { prefix: "/api/settings" });
   await app.register(playRoutes, { prefix: "/api" });
+  await app.register(mediaApiRoutes, { prefix: "/api/media" });
+  await app.register(mediaFileRoutes);
 
   attachHub(app, runner);
   runner.resume();
