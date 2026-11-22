@@ -17,6 +17,9 @@ import { GameRunner } from "./game/runner.js";
 import { attachHub } from "./game/hub.js";
 import { MediaStore } from "./services/media.js";
 import { setExternalFetch } from "./services/safe-fetch.js";
+import { SpotifyService, type FetchLike } from "./services/spotify.js";
+import { SpotifyPlayback } from "./services/spotify-playback.js";
+import { spotifyRoutes } from "./routes/spotify.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -25,6 +28,7 @@ declare module "fastify" {
     config: Config;
     game: GameRunner;
     media: MediaStore;
+    spotify: SpotifyService;
   }
 }
 
@@ -32,9 +36,12 @@ export interface BuildOptions {
   config: Config;
   /** Override the database file (tests use ":memory:"). */
   dbFile?: string;
+  /** Replaces fetch for Spotify calls (tests use a fake Spotify). */
+  spotifyFetch?: FetchLike;
 }
 
-export async function buildApp({ config, dbFile }: BuildOptions): Promise<FastifyInstance> {
+export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
+  const { config, dbFile } = opts;
   const app = Fastify({
     logger: config.LOG_LEVEL === "silent" ? false : { level: config.LOG_LEVEL },
     bodyLimit: 20 * 1024 * 1024,
@@ -51,6 +58,21 @@ export async function buildApp({ config, dbFile }: BuildOptions): Promise<Fastif
   app.decorate("media", media);
   const runner = new GameRunner(db, config.DATA_DIR, app.log, media);
   app.decorate("game", runner);
+  const spotify = new SpotifyService(db, { clientId: config.SPOTIFY_CLIENT_ID, redirectUri: config.SPOTIFY_REDIRECT_URI }, opts.spotifyFetch);
+  app.decorate("spotify", spotify);
+  const spotifyPlayback = new SpotifyPlayback(
+    spotify,
+    (intent) => {
+      try {
+        runner.dispatch(intent);
+      } catch (err) {
+        app.log.warn({ err }, "spotify playback report rejected");
+      }
+    },
+    app.log,
+  );
+  runner.onCommit((state, run) => spotifyPlayback.sync(state, run));
+  app.addHook("onClose", async () => spotifyPlayback.close());
   app.addHook("onClose", async () => db.$client.close());
 
   await app.register(fastifyCookie, { secret: auth.cookieSecret() });
@@ -78,6 +100,7 @@ export async function buildApp({ config, dbFile }: BuildOptions): Promise<Fastif
   await app.register(settingsRoutes, { prefix: "/api/settings" });
   await app.register(playRoutes, { prefix: "/api" });
   await app.register(mediaApiRoutes, { prefix: "/api/media" });
+  await app.register(spotifyRoutes, { prefix: "/api/spotify" });
   await app.register(mediaFileRoutes);
 
   attachHub(app, runner);

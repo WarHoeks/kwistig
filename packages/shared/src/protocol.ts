@@ -52,6 +52,12 @@ export type HostIntent = z.infer<typeof HostIntent>;
 export const TvIntent = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("mediaEnded"), seq: z.number().int().min(0) }),
   z.strictObject({ type: z.literal("mediaError"), seq: z.number().int().min(0), code: z.string().max(40) }),
+  /** The TV's Spotify Web Playback SDK player came online (or went away: null). */
+  z.strictObject({
+    type: z.literal("spotifyDevice"),
+    deviceId: z.string().min(1).max(100).nullable(),
+    error: z.string().max(40).optional(),
+  }),
 ]);
 export type TvIntent = z.infer<typeof TvIntent>;
 

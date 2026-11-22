@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { Language, Settings } from "@kwistig/shared";
 import { api, errorKey, RequestError } from "../../lib/api";
 import { IssueList } from "./IssueList";
+import { SpotifySettings } from "./SpotifySettings";
 
 const isLoopback = (h: string) => h === "localhost" || h.startsWith("127.") || h === "[::1]";
 
@@ -95,6 +96,8 @@ export function SettingsPage() {
           <option value="en">{t("common.languages.en")}</option>
         </select>
       </div>
+
+      <SpotifySettings />
 
       <div className="card space-y-2 p-5">
         <p className="label">{t("settings.backup")}</p>
