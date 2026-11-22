@@ -90,18 +90,25 @@ export function QuestionView({ view, clockOffset, sendTv }: { view: TvView; cloc
   const answering = view.step === "answering";
   const progress = useRevealProgress(view.step, view.timer, clockOffset);
 
-  // At reveal the reveal media (if any) replaces the question media once the host plays it.
-  const useReveal = !!reveal?.revealMedia && view.media?.slot === "reveal";
-  const media = useReveal ? reveal!.revealMedia! : q.media;
+  // The continuation clip ("what happens next") replaces the question media once it's loaded.
+  const cont = view.continuation;
+  const useReveal = !!cont && view.media?.slot === "reveal";
+  const media = useReveal ? cont : q.media;
   const playback = view.media && view.media.slot === (useReveal ? "reveal" : "question") ? view.media : null;
   // "before": the clip or image fills the screen until it ends or the host opens the question.
   const before = q.media?.play === "before" && view.step === "shown" && view.media?.status !== "ended";
+  // Continuation before the answer: after the lock, the clip fills the screen. If the host
+  // reveals while it still plays, it stays full screen until it ends (no restart).
+  const continuationFirst =
+    useReveal &&
+    cont?.play === "before" &&
+    (view.step === "locked" || (view.step === "revealed" && (view.media?.status === "playing" || view.media?.status === "paused")));
 
-  if (before && q.media) {
+  if ((before && q.media) || (continuationFirst && cont)) {
     return (
       <div className="flex h-full flex-col px-20 pb-10 pt-14">
         <Header view={view} q={q} clockOffset={clockOffset} />
-        <MediaSlot media={q.media} playback={playback} progress={1} sendTv={sendTv} className="mt-10 min-h-0 flex-1" />
+        <MediaSlot media={continuationFirst ? cont! : q.media!} playback={playback} progress={1} sendTv={sendTv} className="mt-10 min-h-0 flex-1" />
       </div>
     );
   }

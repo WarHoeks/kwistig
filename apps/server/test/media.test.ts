@@ -209,6 +209,72 @@ describe("media playback", () => {
   });
 });
 
+describe("continuation clip (what happens next)", () => {
+  const quizWith = (play: "before" | "with" | undefined) =>
+    Quiz.parse({
+      version: 1,
+      title: "T",
+      language: "nl",
+      rounds: [
+        {
+          title: "R",
+          items: [
+            {
+              kind: "question",
+              answerType: "multiple_choice",
+              prompt: "Wat gebeurt er hierna?",
+              options: ["Hij valt", "Hij danst"],
+              correct: 1,
+              media: { type: "youtube", videoId: "dQw4w9WgXcQ", startSec: 43, endSec: 53, play: "before" },
+              revealMedia: { type: "youtube", videoId: "dQw4w9WgXcQ", startSec: 48, endSec: 63, ...(play ? { play } : {}) },
+            },
+          ],
+        },
+      ],
+    });
+  const setup = (play: "before" | "with" | undefined) => {
+    const run = buildRunOrder(quizWith(play));
+    let s: GameState = initialState({ sessionId: 1, quizId: 1, joinCode: "ABCD", quizTitle: "T", quizLang: "nl" });
+    const go = (i: MachineIntent) => (s = reduce(s, i, { now: 1, run, random: () => 0 }));
+    go({ type: "beginQuiz" });
+    return { run, go, get s() { return s; } };
+  };
+
+  it("“before the answer”: loaded at lock, the TV gets the clip but not the answer, and it keeps playing through the reveal", () => {
+    const g = setup("before");
+    g.go({ type: "open" });
+    expect(tvView(g.s, g.run, 0).continuation).toBeNull();
+    g.go({ type: "lock" });
+    expect(g.s.media).toMatchObject({ slot: "reveal", status: "idle" });
+    const locked = tvView(g.s, g.run, 0);
+    expect(locked.continuation).toMatchObject({ type: "youtube", startSec: 48, endSec: 63 });
+    expect(locked.reveal).toBeNull(); // still no answer on the TV
+    g.go({ type: "mediaPlay" });
+    const seq = g.s.media!.seq;
+    g.go({ type: "reveal" });
+    expect(g.s.media).toMatchObject({ slot: "reveal", status: "playing", seq }); // not restarted
+  });
+
+  it("“with the answer”: only loaded at reveal", () => {
+    const g = setup("with");
+    g.go({ type: "open" });
+    g.go({ type: "lock" });
+    expect(g.s.media?.slot).toBe("question");
+    expect(tvView(g.s, g.run, 0).continuation).toBeNull();
+    g.go({ type: "reveal" });
+    expect(g.s.media).toMatchObject({ slot: "reveal", status: "idle" });
+    expect(tvView(g.s, g.run, 0).continuation).toMatchObject({ startSec: 48 });
+  });
+
+  it("re-opening the question goes back to the question clip", () => {
+    const g = setup("before");
+    g.go({ type: "open" });
+    g.go({ type: "lock" });
+    g.go({ type: "open" });
+    expect(g.s.media).toMatchObject({ slot: "question", status: "idle" });
+  });
+});
+
 describe("flitsreeks", () => {
   const c = cursorOf((i) => i.kind === "question" && i.answerType === "rapid_sequence");
   const press = (teamId: number): MachineIntent => ({ type: "press", teamId, playerId: 100 + teamId });

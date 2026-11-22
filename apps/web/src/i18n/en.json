@@ -189,7 +189,12 @@
     "imageYes": "Yes",
     "imageNo": "No",
     "addImages": "Add images",
-    "spotifyHint": "Paste a link from Spotify (Share → Copy song link). The TV never shows title or artist."
+    "spotifyHint": "Paste a link from Spotify (Share → Copy song link). The TV never shows title or artist.",
+    "addContinuation": "Show the continuation with the answer",
+    "revealWith": "Together with the answer",
+    "revealBefore": "Before the answer (after closing)",
+    "spotifyBadLink": "This isn't a link to a Spotify track.",
+    "endAfterTrack": "The end is after the end of the track."
   },
   "game": {
     "errors": {
@@ -388,7 +393,8 @@
       "previous": "Previous",
       "finish": "To the final standings",
       "playFirst": "Play the clip first",
-      "startSequence": "Start the rapid sequence"
+      "startSequence": "Start the rapid sequence",
+      "playContinuation": "Play what happens next"
     },
     "photosMissing": "No photo yet: {{teams}}",
     "allPhotos": "Every team has a photo.",
@@ -466,7 +472,9 @@
     "unmute": "Unmute",
     "grid": "Overview",
     "yesImages": "Yes on",
-    "imagesRight": "{{right}}/{{total}} right"
+    "imagesRight": "{{right}}/{{total}} right",
+    "admin": "Admin",
+    "toAdmin": "To admin and settings"
   },
   "settings": {
     "title": "Settings",

@@ -189,7 +189,12 @@
     "imageYes": "Ja",
     "imageNo": "Nee",
     "addImages": "Afbeeldingen toevoegen",
-    "spotifyHint": "Plak een link uit Spotify (Delen → Link naar nummer kopiëren). De tv toont nooit titel of artiest."
+    "spotifyHint": "Plak een link uit Spotify (Delen → Link naar nummer kopiëren). De tv toont nooit titel of artiest.",
+    "addContinuation": "Vervolg tonen bij het antwoord",
+    "revealWith": "Samen met het antwoord",
+    "revealBefore": "Vóór het antwoord (na het sluiten)",
+    "spotifyBadLink": "Dit is geen link naar een Spotify-nummer.",
+    "endAfterTrack": "Het einde ligt na het einde van het nummer."
   },
   "game": {
     "errors": {
@@ -388,7 +393,8 @@
       "previous": "Vorige",
       "finish": "Naar de eindstand",
       "playFirst": "Speel eerst het fragment",
-      "startSequence": "Start de flitsreeks"
+      "startSequence": "Start de flitsreeks",
+      "playContinuation": "Speel het vervolg"
     },
     "photosMissing": "Nog geen foto: {{teams}}",
     "allPhotos": "Alle teams hebben een foto.",
@@ -466,7 +472,9 @@
     "unmute": "Geluid aan",
     "grid": "Overzicht",
     "yesImages": "Ja bij",
-    "imagesRight": "{{right}}/{{total}} goed"
+    "imagesRight": "{{right}}/{{total}} goed",
+    "admin": "Beheer",
+    "toAdmin": "Naar beheer en instellingen"
   },
   "settings": {
     "title": "Instellingen",

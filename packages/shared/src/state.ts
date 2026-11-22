@@ -222,6 +222,11 @@ export interface CommonView {
   totalItems: number;
   /** Playback of the current item's audio/video, if it has any. */
   media: MediaPlayback | null;
+  /**
+   * The continuation clip ("what happens next"): sent once answers are locked
+   * when it plays before the answer, otherwise at reveal.
+   */
+  continuation: PublicMedia | null;
   /** Flitsreeks timing, once the sequence has started. */
   sequence: SequenceState | null;
   /** Flitsreeks reveal: image the host is spotlighting, if any. */

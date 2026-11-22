@@ -173,6 +173,7 @@ function common(s: GameState, run: readonly RunItem[], now: number): CommonView 
     answered: ir ? answeredTeams(ir) : [],
     totalItems: run.length,
     media: ri && s.media?.cursor === ri.cursor ? s.media : null,
+    continuation: ri && ir ? continuation(s, ri, ir) : null,
     sequence: ir?.seq ?? null,
     spotlight: ir?.step === "revealed" ? (ir.spotlight ?? null) : null,
   };
@@ -205,6 +206,14 @@ export function teamView(s: GameState, run: readonly RunItem[], now: number, pla
     pressed: Object.keys(ir?.presses?.[me.teamId] ?? {}).map(Number),
     result: ir?.step === "revealed" ? { verdict: a?.verdict ?? "wrong", points: a?.points ?? 0 } : null,
   };
+}
+
+/** The reveal clip, once the TV may have it: at lock when it plays before the answer, else at reveal. */
+function continuation(s: GameState, ri: RunItem, ir: ItemRun): PublicMedia | null {
+  const rm = ri.item.kind === "question" && ri.item.answerType !== "rapid_sequence" ? ri.item.revealMedia : undefined;
+  if (!rm) return null;
+  if (ir.step === "revealed" || (ir.step === "locked" && rm.play === "before")) return publicMedia(rm, s.news);
+  return null;
 }
 
 /** Teams with at least one vote, or an answer, on this item. */

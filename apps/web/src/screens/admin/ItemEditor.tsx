@@ -7,6 +7,7 @@ import {
   type AnswerType,
   type Item,
   type Language,
+  type Media,
   type Question,
   type Round,
   type Slide,
@@ -26,6 +27,19 @@ type Props = {
 const FORM_TYPES: AnswerType[] = ["multiple_choice", "true_false", "open", "number", "buzzer", "rapid_sequence"];
 
 type Rapid = Extract<Question, { answerType: "rapid_sequence" }>;
+
+/**
+ * "What happens next": the same video or track, from 5 s before the question
+ * clip ends to 10 s after it, shown after the lock and before the answer.
+ */
+function continuationOf(m: Media): Media {
+  if (m.type !== "youtube" && m.type !== "spotify") return m;
+  const end = m.endSec ?? (m.startSec ?? 0) + 15;
+  const base = { startSec: Math.max(0, end - 5), endSec: end + 10, play: "before" as const };
+  return m.type === "youtube"
+    ? { type: "youtube", videoId: m.videoId, ...base, ...(m.hideVideo ? { hideVideo: true } : {}) }
+    : { type: "spotify", uri: m.uri, ...base };
+}
 
 /** Flitsreeks: button label, timing, scoring and 5–20 images marked yes/no. */
 function RapidFields({ q, quizLang, edit }: { q: Rapid; quizLang: Language; edit: (fn: (d: Question) => void) => void }) {
@@ -336,10 +350,19 @@ function QuestionForm({
             value={q.media}
             onChange={(m) => edit((d) => d.answerType !== "rapid_sequence" && setOpt(d, "media", m))}
           />
+          {(q.media?.type === "youtube" || q.media?.type === "spotify") && !q.revealMedia && (
+            <button
+              type="button"
+              className="btn-ghost btn-sm"
+              onClick={() => edit((d) => d.answerType !== "rapid_sequence" && d.media && setOpt(d, "revealMedia", continuationOf(d.media)))}
+            >
+              + {t("editor.addContinuation")}
+            </button>
+          )}
           <MediaEditor
             label={t("editor.revealMedia")}
             value={q.revealMedia}
-            allowPlayBefore={false}
+            slot="reveal"
             onChange={(m) => edit((d) => d.answerType !== "rapid_sequence" && setOpt(d, "revealMedia", m))}
           />
         </>

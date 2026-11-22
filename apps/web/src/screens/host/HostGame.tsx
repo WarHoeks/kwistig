@@ -249,6 +249,8 @@ function PrimaryAction({ view, playable }: { view: HostView; playable: boolean }
   if (view.phase !== "item") return null;
 
   const isLast = view.item ? view.item.cursor === view.totalItems - 1 : false;
+  // A continuation clip is loaded and hasn't been played yet.
+  const continuationReady = view.media?.slot === "reveal" && view.media.status === "idle";
   const nextLabel = isLast ? t("host.action.finish") : t("host.action.next");
 
   if (view.item?.kind === "slide" || !playable) {
@@ -289,12 +291,36 @@ function PrimaryAction({ view, playable }: { view: HostView; playable: boolean }
         </button>
       );
     case "locked":
+      if (continuationReady) {
+        return (
+          <div className="grid gap-2">
+            <button type="button" className={big} onClick={() => void send({ type: "mediaPlay" })}>
+              ▶ {t("host.action.playContinuation")}
+            </button>
+            <button type="button" className="btn-ghost w-full !bg-emerald-600 !text-white" onClick={() => void send({ type: "reveal" })}>
+              ★ {t("host.action.reveal")}
+            </button>
+          </div>
+        );
+      }
       return (
         <button type="button" className={`${big} !bg-emerald-500`} onClick={() => void send({ type: "reveal" })}>
           ★ {t("host.action.reveal")}
         </button>
       );
     default:
+      if (continuationReady) {
+        return (
+          <div className="grid gap-2">
+            <button type="button" className={big} onClick={() => void send({ type: "mediaPlay" })}>
+              ▶ {t("host.action.playContinuation")}
+            </button>
+            <button type="button" className="btn-ghost w-full" onClick={() => void send({ type: "next" })}>
+              {nextLabel} →
+            </button>
+          </div>
+        );
+      }
       return (
         <button type="button" className={big} onClick={() => void send({ type: "next" })}>
           {nextLabel} →

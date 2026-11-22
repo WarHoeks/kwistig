@@ -108,6 +108,11 @@ function lockRun(s: GameState, run: ItemRun, ri: RunItem, ctx: Ctx) {
   }
   run.votes ??= {};
   run.answers = judge(ri, resolveVotes(ri, run, ctx.random));
+  // A continuation clip "before the answer" (e.g. what happens next) is ready to play once answers are in.
+  const rm = ri.item.kind === "question" ? ri.item.revealMedia : undefined;
+  if (s.phase === "item" && s.cursor === ri.cursor && rm?.play === "before" && isPlayableMedia(rm)) {
+    setPlayback(s, ri.cursor, "reveal", rm);
+  }
 }
 
 /** Drops a phone's votes (it left the team or the game). */
@@ -312,6 +317,10 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
         }
       }
       run.step = "answering";
+      // Re-opened after a continuation clip was loaded: back to the question's own clip.
+      if (s.media?.cursor === s.cursor && s.media.slot === "reveal" && q.answerType !== "rapid_sequence") {
+        setPlayback(s, s.cursor, "question", q.media);
+      }
       if (q.answerType === "rapid_sequence") startSequence(run, q, now);
       else if (ri.timeLimitSec) startTimer(run, ri.timeLimitSec, now);
       return;
@@ -330,8 +339,10 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       if (run.step === "answering" || run.step === "shown") lockRun(s, run, ri, ctx);
       run.step = "revealed";
       run.spotlight = null;
-      // Reveal media (e.g. the full clip) takes over the TV's player.
-      if (q.answerType !== "rapid_sequence" && isPlayableMedia(q.revealMedia)) setPlayback(s, s.cursor, "reveal", q.revealMedia);
+      // Reveal media (e.g. the full clip) takes over the TV's player, unless it was
+      // already loaded at lock ("before the answer") — then it keeps its state.
+      const armed = s.media?.cursor === s.cursor && s.media.slot === "reveal";
+      if (!armed && q.answerType !== "rapid_sequence" && isPlayableMedia(q.revealMedia)) setPlayback(s, s.cursor, "reveal", q.revealMedia);
       return;
     }
 

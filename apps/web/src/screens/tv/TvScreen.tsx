@@ -83,7 +83,7 @@ function TvLive() {
           {t("tv.spotifyClick")}
         </div>
       )}
-      {spotify.state === "error" && spotify.error && (
+      {spotify.state === "error" && spotify.error && spotifyOnScreen(live) && (
         <div className="absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full bg-red-700/90 px-8 py-3 text-[26px] text-white">
           {t(`spotify.errors.spotify_${spotify.error}`, { defaultValue: t("tv.mediaError") })}
         </div>
@@ -109,6 +109,16 @@ function TvLive() {
         </div>
       )}
     </Stage>
+  );
+}
+
+/** A Spotify clip is part of what's on screen now (question, continuation or slide). */
+function spotifyOnScreen(view: TvView | null): boolean {
+  const item = view?.item;
+  return (
+    (item?.kind === "question" && item.media?.type === "spotify") ||
+    (item?.kind === "slide" && item.media?.type === "spotify") ||
+    view?.continuation?.type === "spotify"
   );
 }
 
