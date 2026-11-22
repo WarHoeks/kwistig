@@ -23,6 +23,31 @@ describe("host cookie", () => {
   });
 });
 
+describe("changing the PIN in admin", () => {
+  it("needs the current PIN, signs other devices out, keeps this one in, and can go back to HOST_PIN", async () => {
+    let cookie: string;
+    ({ app, cookie } = await testApp());
+    const other = cookie; // e.g. the TV, signed in with the same generation
+    const change = (body: object, c = cookie) => app.inject({ method: "POST", url: "/api/auth/pin", payload: body, headers: { cookie: c } });
+
+    expect((await change({ current: "nope", next: "123456" })).json()).toEqual({ error: "wrong_pin" });
+    expect((await change({ current: TEST_PIN, next: "123" })).statusCode).toBe(400);
+
+    const ok = await change({ current: TEST_PIN, next: "nieuw-123" });
+    expect(ok.statusCode).toBe(200);
+    const fresh = ok.cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+    expect((await app.inject({ url: "/api/quizzes", headers: { cookie: fresh } })).statusCode).toBe(200);
+    expect((await app.inject({ url: "/api/quizzes", headers: { cookie: other } })).statusCode).toBe(401);
+    expect((await app.inject({ method: "POST", url: "/api/auth/login", payload: { pin: "nieuw-123" } })).statusCode).toBe(200);
+    expect((await app.inject({ method: "POST", url: "/api/auth/login", payload: { pin: TEST_PIN } })).statusCode).toBe(401);
+
+    // Back to HOST_PIN.
+    const reset = await app.inject({ method: "DELETE", url: "/api/auth/pin", headers: { cookie: fresh } });
+    expect(reset.json()).toMatchObject({ savedPin: false });
+    expect((await app.inject({ method: "POST", url: "/api/auth/login", payload: { pin: TEST_PIN } })).statusCode).toBe(200);
+  });
+});
+
 describe("AttemptLimiter", () => {
   it("blocks a client after 10 failures", () => {
     const l = new AttemptLimiter();

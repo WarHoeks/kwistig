@@ -1,7 +1,7 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { Db } from "../db/client.js";
-import { getSetting, setSetting } from "../services/settings.js";
+import { deleteSetting, getSetting, setSetting } from "../services/settings.js";
 
 export const HOST_COOKIE = "kwistig_host";
 export const DEFAULT_PIN = "change-me";
@@ -74,6 +74,17 @@ export class HostAuth {
   setPin(pin: string): void {
     setSetting(this.db, "pin_hash", hashPin(pin));
     this.rotate();
+  }
+
+  /** Back to HOST_PIN from the environment; signs everyone out. */
+  clearPin(): void {
+    deleteSetting(this.db, "pin_hash");
+    this.rotate();
+  }
+
+  /** Whether a PIN saved in admin overrides HOST_PIN. */
+  hasSavedPin(): boolean {
+    return !!getSetting(this.db, "pin_hash");
   }
 
   private cookieValue(): string {

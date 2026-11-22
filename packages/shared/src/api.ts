@@ -5,6 +5,11 @@ import { Language } from "./quiz.js";
 
 export const LoginBody = z.strictObject({ pin: z.string().min(1).max(200) });
 
+export const ChangePinBody = z.strictObject({
+  current: z.string().min(1).max(200),
+  next: z.string().min(6, "needs at least 6 characters").max(64),
+});
+
 export const CreateQuizBody = z.strictObject({
   title: z.string().trim().min(1).max(200),
   language: Language,
@@ -42,6 +47,17 @@ export const SettingsPatch = z.strictObject({
   defaultLocale: Language.optional(),
   quickMessages: z.array(z.string().trim().min(1).max(280)).max(20).optional(),
 });
+
+export interface SessionSummary {
+  id: number;
+  quizTitle: string;
+  startedAt: string;
+  endedAt: string | null;
+  /** The session running right now (can't be deleted). */
+  active: boolean;
+  phase: string;
+  teams: { name: string; emoji: string; color: string; score: number; rank: number; photoUrl: string | null }[];
+}
 
 /** Error body for every 4xx. `issues` is set for validation failures. */
 export interface ApiError {
