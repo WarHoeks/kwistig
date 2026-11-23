@@ -205,7 +205,7 @@ function useThinkingMusic(view: TvView | null, enabled: boolean, clockOffset: nu
 
 const FINAL_MS = 5000;
 
-/** Sound effects on game events: a buzz, a wrong buzzer answer, a reveal. */
+/** Sound effects on game events: answers closing, a buzz, a wrong buzzer answer, a reveal. */
 function useGameSounds(view: TvView | null) {
   const prev = useRef<{ key: string; step: string | null; buzz: number | null; out: number } | null>(null);
   useEffect(() => {
@@ -217,6 +217,7 @@ function useGameSounds(view: TvView | null) {
     if (!p || p.key !== key) return; // a new item: nothing to compare with
     if (now.buzz !== null && now.buzz !== p.buzz) sounds.buzz();
     if (now.out > p.out) sounds.wrong();
+    if (now.step === "locked" && p.step === "answering") sounds.ding();
     if (now.step === "revealed" && p.step !== "revealed") sounds.reveal();
   }, [view]);
 }

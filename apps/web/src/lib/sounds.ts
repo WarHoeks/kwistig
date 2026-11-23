@@ -64,6 +64,12 @@ export const sounds = {
     tone(659, 0.1, 0.12, "triangle", 0.2);
     tone(784, 0.2, 0.3, "triangle", 0.22);
   },
+  /** Answers closed: a bell-like ding (fundamental plus a soft overtone, long decay). */
+  ding() {
+    tone(1568, 0, 1.4, "sine", 0.22);
+    tone(3136, 0, 0.7, "sine", 0.06);
+    tone(4704, 0, 0.3, "sine", 0.025);
+  },
   /** Last seconds of a timer. */
   tick() {
     tone(1200, 0, 0.05, "square", 0.06);
