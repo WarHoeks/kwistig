@@ -295,7 +295,8 @@
     "spotifyClick": "Click this screen once to allow Spotify sound",
     "buzzNow": "Hit the buzzer!",
     "buzzedFirst": "Buzzed first",
-    "finaleTitle": "And the winner is…"
+    "finaleTitle": "And the winner is…",
+    "clickForSound": "Click this screen once to turn on sound"
   },
   "join": {
     "title": "Join",
@@ -513,7 +514,9 @@
     "calmMode": "Calm mode",
     "calmModeHint": "No confetti, sparkles or shaking; frames and cracks stay still. Also follows the device's ‘reduce motion’ setting.",
     "tvSounds": "Sound effects",
-    "tvSoundsHint": "Buzzer, revealing the answer and the winner. Click the TV screen once so the browser allows sound."
+    "tvSoundsHint": "Buzzer, revealing the answer and the winner. Click the TV screen once so the browser allows sound.",
+    "tvMusic": "Background tune",
+    "tvMusicHint": "A quiet tune while teams answer. Not for questions with a YouTube or Spotify clip, and it stops when answers close or a team buzzes."
   },
   "packages": {
     "upload": "Upload package",

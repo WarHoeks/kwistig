@@ -39,6 +39,8 @@ export const Settings = z.object({
   calmMode: z.boolean(),
   /** Sound effects on the TV (buzzer, reveal, winner). */
   tvSounds: z.boolean(),
+  /** A quiet tune on the TV while teams answer questions without a clip. */
+  tvMusic: z.boolean(),
 });
 export type Settings = z.infer<typeof Settings>;
 
@@ -52,6 +54,7 @@ export const SettingsPatch = z.strictObject({
   quickMessages: z.array(z.string().trim().min(1).max(280)).max(20).optional(),
   calmMode: z.boolean().optional(),
   tvSounds: z.boolean().optional(),
+  tvMusic: z.boolean().optional(),
 });
 
 export interface SessionSummary {

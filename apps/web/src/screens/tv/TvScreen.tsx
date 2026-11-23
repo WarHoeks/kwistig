@@ -3,7 +3,7 @@ import { useSpotifyTvPlayer } from "../../components/media/SpotifyTvPlayer";
 import { useTranslation } from "react-i18next";
 import { isIdle, type ServerView, type Settings, type TvJoinInfo, type TvView } from "@kwistig/shared";
 import { setCalmMode } from "../../lib/effects";
-import { setSoundsEnabled, sounds } from "../../lib/sounds";
+import { setSoundsEnabled, sounds, startThinkingMusic, unlockAudio } from "../../lib/sounds";
 import { PinGate } from "../../components/PinGate";
 import { Stage } from "../../components/Stage";
 import { api } from "../../lib/api";
@@ -24,8 +24,10 @@ function TvLive() {
   const { view, connected, clockOffset, send } = useGameSocket<ServerView<TvView>>({ role: "tv" });
   const sendTv: SendTv = (intent) => void send(intent);
   const live = view && !isIdle(view) ? view : null;
-  useTvSettings();
+  const music = useTvSettings();
   useGameSounds(live);
+  useThinkingMusic(live, music);
+  const activated = useUserActivation();
 
   // Spotify: this page is the "Kwistig TV" player. Its device id is re-sent after
   // every reconnect, since the server only keeps it in memory.
@@ -81,11 +83,18 @@ function TvLive() {
     <Stage>
       {body}
       <IpAddressHint view={live} />
-      {/* Spotify needs one click on the TV page before it may play sound. */}
-      {spotify.state === "ready" && spotify.needsClick && (
-        <div className="absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full bg-black/80 px-8 py-3 text-[26px] text-gold-300">
-          {t("tv.spotifyClick")}
+      {/* Browsers only play sound (YouTube, Spotify, effects) after one click on the page. */}
+      {!activated ? (
+        <div className="absolute bottom-6 left-1/2 z-40 -translate-x-1/2 animate-pulse rounded-full bg-gold-400 px-10 py-4 text-[30px] font-semibold text-ink-950" data-testid="tv-click-for-sound">
+          🔊 {t("tv.clickForSound")}
         </div>
+      ) : (
+        spotify.state === "ready" &&
+        spotify.needsClick && (
+          <div className="absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full bg-black/80 px-8 py-3 text-[26px] text-gold-300">
+            {t("tv.spotifyClick")}
+          </div>
+        )
       )}
       {spotify.state === "error" && spotify.error && spotifyOnScreen(live) && (
         <div className="absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full bg-red-700/90 px-8 py-3 text-[26px] text-white">
@@ -116,20 +125,67 @@ function TvLive() {
   );
 }
 
-/** Calm mode and sound effects from admin settings; re-read every minute. */
-function useTvSettings() {
+/** Whether this page has had a click or key press, which browsers require before playing sound. */
+function useUserActivation(): boolean {
+  const [active, setActive] = useState(() => navigator.userActivation?.hasBeenActive ?? true);
+  useEffect(() => {
+    if (active) return;
+    const on = () => {
+      setActive(true);
+      unlockAudio();
+    };
+    window.addEventListener("pointerdown", on, { once: true });
+    window.addEventListener("keydown", on, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", on);
+      window.removeEventListener("keydown", on);
+    };
+  }, [active]);
+  return active;
+}
+
+/** Calm mode and sound effects from admin settings; re-read every minute. Returns the music switch. */
+function useTvSettings(): boolean {
+  const [music, setMusic] = useState(true);
   useEffect(() => {
     const load = () =>
       api<Settings>("/settings")
         .then((s) => {
           setCalmMode(s.calmMode);
           setSoundsEnabled(s.tvSounds);
+          setMusic(s.tvMusic);
         })
         .catch(() => undefined);
     void load();
     const timer = setInterval(load, 60_000);
     return () => clearInterval(timer);
   }, []);
+  return music;
+}
+
+/**
+ * A quiet looping tune while teams answer a question without its own clip. It
+ * stops when answers close, when a team buzzes, and for YouTube/Spotify questions.
+ */
+function useThinkingMusic(view: TvView | null, enabled: boolean) {
+  const item = view?.item;
+  const on =
+    enabled &&
+    view?.phase === "item" &&
+    item?.kind === "question" &&
+    view.step === "answering" &&
+    item.answerType !== "rapid_sequence" &&
+    item.media?.type !== "youtube" &&
+    item.media?.type !== "spotify" &&
+    !view.buzz?.current &&
+    !view.overlay.scoreboard &&
+    !view.overlay.message;
+  const key = on ? `${view.sessionId}:${item.cursor}` : null;
+  useEffect(() => {
+    if (!key) return;
+    const stop = startThinkingMusic();
+    return stop;
+  }, [key]);
 }
 
 /** Sound effects on game events: a buzz, a wrong buzzer answer, a reveal. */

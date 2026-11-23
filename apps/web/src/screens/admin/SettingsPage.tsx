@@ -23,7 +23,7 @@ export function SettingsPage() {
     });
   }, []);
 
-  const save = async (patch: Partial<Pick<Settings, "joinBaseUrl" | "defaultLocale" | "calmMode" | "tvSounds">>) => {
+  const save = async (patch: Partial<Pick<Settings, "joinBaseUrl" | "defaultLocale" | "calmMode" | "tvSounds" | "tvMusic">>) => {
     setError(undefined);
     setSaved(false);
     try {
@@ -118,6 +118,13 @@ export function SettingsPage() {
           <span>
             <span className="block font-semibold">{t("settings.tvSounds")}</span>
             <span className="block text-sm text-ink-400">{t("settings.tvSoundsHint")}</span>
+          </span>
+        </label>
+        <label className="flex items-start gap-3">
+          <input type="checkbox" className="mt-1 accent-amber-400" checked={settings.tvMusic} onChange={(e) => void save({ tvMusic: e.target.checked })} />
+          <span>
+            <span className="block font-semibold">{t("settings.tvMusic")}</span>
+            <span className="block text-sm text-ink-400">{t("settings.tvMusicHint")}</span>
           </span>
         </label>
       </div>

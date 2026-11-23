@@ -16,6 +16,8 @@ interface YTPlayer {
   getCurrentTime(): number;
   getPlayerState(): number;
   destroy(): void;
+  unloadModule?(name: string): void;
+  setOption?(module: string, option: string, value: unknown): void;
 }
 interface YTNamespace {
   Player: new (el: HTMLElement, opts: object) => YTPlayer;
@@ -51,6 +53,17 @@ export function loadYouTubeApi(): Promise<YTNamespace> {
   return apiPromise;
 }
 
+/** Turns subtitles off, even when the signed-in YouTube account has them on by default. */
+function hideCaptions(p: YTPlayer | null) {
+  try {
+    p?.setOption?.("captions", "track", {});
+    p?.unloadModule?.("captions");
+    p?.unloadModule?.("cc");
+  } catch {
+    // Older players without the captions module: nothing to hide.
+  }
+}
+
 /** YouTube player errors: 2 bad id, 5 HTML5 error, 100 not found, 101/150 embedding blocked. */
 const ERROR_CODES: Record<number, string> = {
   2: "invalid_id",
@@ -81,6 +94,12 @@ export function YouTubePlayer({
   const player = useRef<YTPlayer | null>(null);
   const [ready, setReady] = useState(false);
   const [blocked, setBlocked] = useState(false);
+  // YouTube draws the video title over the player while it is cued, paused, and for
+  // the first seconds of playback. We cover the player until it really plays, and
+  // the title strip for a few seconds after each start.
+  const [ytState, setYtState] = useState(-1);
+  const [started, setStarted] = useState(false);
+  const [titleMask, setTitleMask] = useState(false);
   const reportedEnd = useRef(-1);
   const loadedSeq = useRef(-1);
   const latest = useRef({ playback, onEnded, onError });
@@ -111,13 +130,20 @@ export function YouTubePlayer({
             modestbranding: 1,
             playsinline: 1,
             rel: 0,
+            // No subtitles: lyrics on screen would give away a music question.
+            cc_load_policy: 0,
             origin: window.location.origin,
           },
           events: {
             onReady: () => setReady(true),
             onStateChange: (e: { data: number }) => {
               const pb = latest.current.playback;
-              if (e.data === YT.PlayerState.PLAYING) setBlocked(false);
+              setYtState(e.data);
+              if (e.data === YT.PlayerState.PLAYING) {
+                setBlocked(false);
+                setStarted(true);
+                hideCaptions(player.current);
+              }
               if (e.data === YT.PlayerState.ENDED && pb && pb.status === "playing" && reportedEnd.current !== pb.seq) {
                 reportedEnd.current = pb.seq;
                 latest.current.onEnded(pb.seq);
@@ -150,18 +176,29 @@ export function YouTubePlayer({
       if (loadedSeq.current !== seq) {
         loadedSeq.current = seq;
         reportedEnd.current = -1;
+        setStarted(false);
         p.loadVideoById(clip);
+        const stillPlaying = () => latest.current.playback?.status === "playing" && latest.current.playback.seq === seq;
+        // A freshly created player sometimes ignores the first load: nudge it once.
+        const nudge = window.setTimeout(() => {
+          const st = player.current?.getPlayerState();
+          if (stillPlaying() && (st === -1 || st === 5)) player.current?.playVideo();
+        }, 1200);
         // If the browser blocks autoplay with sound, nothing starts: ask for a click.
         const check = window.setTimeout(() => {
-          if (player.current && player.current.getPlayerState() !== 1 && latest.current.playback?.status === "playing") setBlocked(true);
-        }, 2500);
-        return () => clearTimeout(check);
+          if (player.current && player.current.getPlayerState() !== 1 && stillPlaying()) setBlocked(true);
+        }, 3500);
+        return () => {
+          clearTimeout(nudge);
+          clearTimeout(check);
+        };
       }
       p.playVideo();
     } else if (status === "paused") {
       p.pauseVideo();
     } else if (status === "idle") {
       loadedSeq.current = -1;
+      setStarted(false);
       p.cueVideoById(clip);
     } else if (status === "ended") {
       p.pauseVideo();
@@ -174,6 +211,17 @@ export function YouTubePlayer({
     if (playback?.muted) p.mute();
     else p.unMute();
   }, [ready, playback?.muted]);
+
+  // Hide the title strip for the first seconds of every start or resume.
+  const playingNow = ytState === 1;
+  useEffect(() => {
+    if (!playingNow) return;
+    setTitleMask(true);
+    hideCaptions(player.current);
+    const timer = window.setTimeout(() => setTitleMask(false), 4500);
+    return () => clearTimeout(timer);
+  }, [playingNow]);
+  const covered = !started || ytState === 0 || ytState === 2 || ytState === 5 || ytState === -1;
 
   // Enforce the end marker ourselves: endSeconds is not always honoured after seeks.
   // The playhead is also written to data-position, so tests can check the markers.
@@ -202,6 +250,25 @@ export function YouTubePlayer({
   return (
     <div ref={root} className="relative h-full w-full" data-testid="tv-youtube" data-status={status} data-seq={seq}>
       <div ref={host} className="absolute inset-0 [&_iframe]:pointer-events-none" />
+      {!media.hideVideo && (
+        <>
+          <div
+            aria-hidden
+            className={`pointer-events-none absolute inset-x-0 top-0 h-[18%] min-h-[90px] bg-gradient-to-b from-black from-70% to-transparent transition-opacity duration-700 ${titleMask ? "opacity-100" : "opacity-0"}`}
+          />
+          <div
+            aria-hidden
+            className={`pointer-events-none absolute inset-x-0 bottom-0 h-[14%] min-h-[80px] bg-gradient-to-t from-black from-70% to-transparent transition-opacity duration-700 ${titleMask ? "opacity-100" : "opacity-0"}`}
+          />
+          <div
+            aria-hidden
+            data-testid="tv-youtube-cover"
+            className={`pointer-events-none absolute inset-0 flex items-center justify-center bg-ink-950 transition-opacity duration-300 ${covered ? "opacity-100" : "opacity-0"}`}
+          >
+            <span className="text-[120px] opacity-30">🎬</span>
+          </div>
+        </>
+      )}
       {media.hideVideo && <AudioCover className="absolute inset-0 rounded-none" label={t("tv.listen")} />}
       {blocked && (
         <button

@@ -295,7 +295,8 @@
     "spotifyClick": "Klik één keer op dit scherm om Spotify-geluid toe te staan",
     "buzzNow": "Druk op de buzzer!",
     "buzzedFirst": "Als eerste gedrukt",
-    "finaleTitle": "En de winnaar is…"
+    "finaleTitle": "En de winnaar is…",
+    "clickForSound": "Klik één keer op dit scherm om geluid aan te zetten"
   },
   "join": {
     "title": "Meedoen",
@@ -513,7 +514,9 @@
     "calmMode": "Rustige modus",
     "calmModeHint": "Geen confetti, schitteringen of schudden; kaders en barsten blijven stil staan. Volgt ook de instelling ‘minder beweging’ van het apparaat.",
     "tvSounds": "Geluidseffecten",
-    "tvSoundsHint": "Buzzer, antwoord tonen en de winnaar. Klik één keer op het tv-scherm zodat de browser geluid toestaat."
+    "tvSoundsHint": "Buzzer, antwoord tonen en de winnaar. Klik één keer op het tv-scherm zodat de browser geluid toestaat.",
+    "tvMusic": "Achtergrondmuziekje",
+    "tvMusicHint": "Een rustig deuntje terwijl teams antwoorden. Niet bij vragen met een YouTube- of Spotify-fragment, en het stopt zodra de antwoorden sluiten of een team buzzt."
   },
   "packages": {
     "upload": "Pakket uploaden",

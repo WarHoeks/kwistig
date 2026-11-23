@@ -20,6 +20,7 @@ export function readSettings(app: FastifyInstance): Settings {
     quickMessages: quick ? (JSON.parse(quick) as string[]) : DEFAULT_QUICK_MESSAGES[locale],
     calmMode: getSetting(app.db, "calm_mode") === "true",
     tvSounds: getSetting(app.db, "tv_sounds") !== "false",
+    tvMusic: getSetting(app.db, "tv_music") !== "false",
   };
 }
 
@@ -47,6 +48,7 @@ export async function settingsRoutes(app: FastifyInstance) {
     if (patch.quickMessages) setSetting(app.db, "quick_messages", JSON.stringify(patch.quickMessages));
     if (patch.calmMode !== undefined) setSetting(app.db, "calm_mode", String(patch.calmMode));
     if (patch.tvSounds !== undefined) setSetting(app.db, "tv_sounds", String(patch.tvSounds));
+    if (patch.tvMusic !== undefined) setSetting(app.db, "tv_music", String(patch.tvMusic));
     return readSettings(app);
   });
 }
