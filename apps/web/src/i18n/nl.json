@@ -225,7 +225,10 @@
       "internal_error": "Er ging iets mis op de server.",
       "no_media": "Dit onderdeel heeft geen geluid of video.",
       "not_running": "De flitsreeks is nog niet begonnen.",
-      "already_pressed": "Jullie team heeft al gedrukt op deze afbeelding."
+      "already_pressed": "Jullie team heeft al gedrukt op deze afbeelding.",
+      "not_your_turn": "Er is nu geen team aan de beurt.",
+      "buzzer_taken": "Een ander team was je net voor.",
+      "locked_out": "Jullie zijn af voor deze vraag."
     }
   },
   "tv": {
@@ -289,7 +292,10 @@
     "ipHintLoopback": "Muziekvideo's op YouTube spelen vaak niet als de tv via een IP-adres is geopend. Open de tv via localhost.",
     "ipHintLan": "Muziekvideo's op YouTube spelen vaak niet via een IP-adres. Open de tv op de laptop zelf via http://localhost:8080/tv.",
     "ipHintSwitch": "Naar localhost",
-    "spotifyClick": "Klik één keer op dit scherm om Spotify-geluid toe te staan"
+    "spotifyClick": "Klik één keer op dit scherm om Spotify-geluid toe te staan",
+    "buzzNow": "Druk op de buzzer!",
+    "buzzedFirst": "Als eerste gedrukt",
+    "finaleTitle": "En de winnaar is…"
   },
   "join": {
     "title": "Meedoen",
@@ -359,7 +365,11 @@
     "sequenceStartsIn": "Begint over {{n}}…",
     "pressed": "Gedrukt!",
     "pressHint": "Eén druk per afbeelding telt voor het hele team, en kan niet terug.",
-    "imagesRight": "{{right}} van {{total}} afbeeldingen goed"
+    "imagesRight": "{{right}} van {{total}} afbeeldingen goed",
+    "buzzHint": "Weet je het? Druk als eerste!",
+    "buzzYourTurn": "Jullie zijn aan de beurt! Zeg het antwoord hardop.",
+    "buzzOtherTurn": "{{team}} drukte als eerste.",
+    "buzzOut": "Jullie zijn af voor deze vraag."
   },
   "host": {
     "title": "Quizmaster",
@@ -481,7 +491,11 @@
     "yesImages": "Ja bij",
     "imagesRight": "{{right}}/{{total}} goed",
     "admin": "Beheer",
-    "toAdmin": "Naar beheer en instellingen"
+    "toAdmin": "Naar beheer en instellingen",
+    "buzzedFirst": "Als eerste gedrukt",
+    "waitingForBuzz": "Wacht op een buzz…",
+    "buzzOut": "Af: {{teams}}",
+    "buzzed": "gebuzzt"
   },
   "settings": {
     "title": "Instellingen",
@@ -494,7 +508,12 @@
     "defaultLocale": "Taal voor beheer en quizmaster",
     "backup": "Volledige back-up",
     "backupHint": "Database, afbeeldingen en teamfoto's in één zip. Kan veilig terwijl een quiz loopt.",
-    "backupDownload": "Back-up downloaden"
+    "backupDownload": "Back-up downloaden",
+    "tvEffects": "Tv-effecten",
+    "calmMode": "Rustige modus",
+    "calmModeHint": "Geen confetti, schitteringen of schudden; kaders en barsten blijven stil staan. Volgt ook de instelling ‘minder beweging’ van het apparaat.",
+    "tvSounds": "Geluidseffecten",
+    "tvSoundsHint": "Buzzer, antwoord tonen en de winnaar. Klik één keer op het tv-scherm zodat de browser geluid toestaat."
   },
   "packages": {
     "upload": "Pakket uploaden",

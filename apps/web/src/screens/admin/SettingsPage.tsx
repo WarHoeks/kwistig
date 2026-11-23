@@ -23,7 +23,7 @@ export function SettingsPage() {
     });
   }, []);
 
-  const save = async (patch: Partial<Pick<Settings, "joinBaseUrl" | "defaultLocale">>) => {
+  const save = async (patch: Partial<Pick<Settings, "joinBaseUrl" | "defaultLocale" | "calmMode" | "tvSounds">>) => {
     setError(undefined);
     setSaved(false);
     try {
@@ -97,6 +97,29 @@ export function SettingsPage() {
           <option value="nl">{t("common.languages.nl")}</option>
           <option value="en">{t("common.languages.en")}</option>
         </select>
+      </div>
+
+      <div className="card space-y-3 p-5">
+        <p className="label">{t("settings.tvEffects")}</p>
+        <label className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            className="mt-1 accent-amber-400"
+            checked={settings.calmMode}
+            onChange={(e) => void save({ calmMode: e.target.checked })}
+          />
+          <span>
+            <span className="block font-semibold">{t("settings.calmMode")}</span>
+            <span className="block text-sm text-ink-400">{t("settings.calmModeHint")}</span>
+          </span>
+        </label>
+        <label className="flex items-start gap-3">
+          <input type="checkbox" className="mt-1 accent-amber-400" checked={settings.tvSounds} onChange={(e) => void save({ tvSounds: e.target.checked })} />
+          <span>
+            <span className="block font-semibold">{t("settings.tvSounds")}</span>
+            <span className="block text-sm text-ink-400">{t("settings.tvSoundsHint")}</span>
+          </span>
+        </label>
       </div>
 
       <PinSettings />

@@ -5,7 +5,7 @@ import { TeamAvatar } from "../../components/TeamAvatar";
 import { formatScore, OPTION_LETTERS, useQuizText } from "../../lib/text";
 import { useHost } from "./HostScreen";
 
-const PLAYABLE = ["multiple_choice", "true_false", "open", "number", "rapid_sequence"];
+const PLAYABLE = ["multiple_choice", "true_false", "open", "number", "rapid_sequence", "buzzer"];
 
 /** Play/pause, replay from the start marker and mute for the TV's audio/video, with its live status. */
 function MediaControls({ view }: { view: HostView }) {
@@ -48,6 +48,41 @@ function MediaControls({ view }: { view: HostView }) {
           {m.muted ? `🔇 ${t("host.unmute")}` : `🔊 ${t("host.mute")}`}
         </button>
       </div>
+    </section>
+  );
+}
+
+/** Buzzer: who pressed first, and the host's verdict. Wrong reopens the buzzer for the others. */
+function BuzzerHost({ view }: { view: HostView }) {
+  const { t } = useTranslation();
+  const { send } = useHost();
+  const b = view.buzz;
+  const team = b?.current ? view.teamsDetail.find((tm) => tm.id === b.current) : undefined;
+  const out = view.teamsDetail.filter((tm) => b?.lockedOut.includes(tm.id));
+  return (
+    <section className="card space-y-3 p-4" data-testid="host-buzzer">
+      {team ? (
+        <>
+          <div className="flex items-center gap-3">
+            <TeamAvatar team={team} size={56} rounded="rounded-xl" />
+            <div>
+              <p className="text-sm text-ink-400">{t("host.buzzedFirst")}</p>
+              <p className="text-2xl font-bold">{team.name}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" className="btn bg-emerald-500 py-4 text-lg text-ink-950" onClick={() => void send({ type: "buzzVerdict", verdict: "correct" })}>
+              ✓ {t("host.verdict.correct")}
+            </button>
+            <button type="button" className="btn bg-red-500 py-4 text-lg text-white" onClick={() => void send({ type: "buzzVerdict", verdict: "wrong" })}>
+              ✗ {t("host.verdict.wrong")}
+            </button>
+          </div>
+        </>
+      ) : (
+        <p className="animate-pulse text-lg font-semibold text-gold-300">🔔 {t("host.waitingForBuzz")}</p>
+      )}
+      {out.length > 0 && <p className="text-sm text-ink-400">{t("host.buzzOut", { teams: out.map((tm) => tm.name).join(", ") })}</p>}
     </section>
   );
 }
@@ -121,6 +156,8 @@ export function HostGame() {
           <p className="text-2xl font-bold">{t("tv.final")}</p>
         </section>
       )}
+
+      {view.phase === "item" && item?.kind === "question" && item.answerType === "buzzer" && view.step === "answering" && <BuzzerHost view={view} />}
 
       <PrimaryAction view={view} playable={!!playable} />
 
@@ -379,6 +416,7 @@ function Answers({ view }: { view: HostView }) {
   const answeredCount = answering ? view.ballots.length : view.answers.length;
 
   const show = (v: AnswerValue): string => {
+    if (item?.kind === "question" && item.answerType === "buzzer") return t("host.buzzed");
     if (item?.kind === "question" && item.answerType === "rapid_sequence" && typeof v === "string") {
       // "10110" against the right answers: show how many images the team got right.
       const right = item.images.filter((img, i) => (v[i] === "1") === img.yes).length;

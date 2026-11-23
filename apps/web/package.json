@@ -11,9 +11,12 @@
   "//": "Everything is bundled by Vite, so all packages are devDependencies and stay out of the runtime image.",
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.5",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "canvas-confetti": "^1.9.4",
+    "framer-motion": "^14.14.0",
     "i18next": "^27.2.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

@@ -225,7 +225,10 @@
       "internal_error": "Something went wrong on the server.",
       "no_media": "This item has no audio or video.",
       "not_running": "The rapid sequence hasn't started yet.",
-      "already_pressed": "Your team already pressed on this image."
+      "already_pressed": "Your team already pressed on this image.",
+      "not_your_turn": "No team has the turn right now.",
+      "buzzer_taken": "Another team was just quicker.",
+      "locked_out": "You're out for this question."
     }
   },
   "tv": {
@@ -289,7 +292,10 @@
     "ipHintLoopback": "YouTube music videos often won't play when the TV is opened via an IP address. Open the TV via localhost.",
     "ipHintLan": "YouTube music videos often won't play via an IP address. Open the TV on the laptop itself at http://localhost:8080/tv.",
     "ipHintSwitch": "Switch to localhost",
-    "spotifyClick": "Click this screen once to allow Spotify sound"
+    "spotifyClick": "Click this screen once to allow Spotify sound",
+    "buzzNow": "Hit the buzzer!",
+    "buzzedFirst": "Buzzed first",
+    "finaleTitle": "And the winner is…"
   },
   "join": {
     "title": "Join",
@@ -359,7 +365,11 @@
     "sequenceStartsIn": "Starts in {{n}}…",
     "pressed": "Pressed!",
     "pressHint": "One press per image counts for the whole team, and can't be undone.",
-    "imagesRight": "{{right}} of {{total}} images right"
+    "imagesRight": "{{right}} of {{total}} images right",
+    "buzzHint": "Know it? Press first!",
+    "buzzYourTurn": "Your turn! Say the answer out loud.",
+    "buzzOtherTurn": "{{team}} buzzed first.",
+    "buzzOut": "You're out for this question."
   },
   "host": {
     "title": "Quizmaster",
@@ -481,7 +491,11 @@
     "yesImages": "Yes on",
     "imagesRight": "{{right}}/{{total}} right",
     "admin": "Admin",
-    "toAdmin": "To admin and settings"
+    "toAdmin": "To admin and settings",
+    "buzzedFirst": "Buzzed first",
+    "waitingForBuzz": "Waiting for a buzz…",
+    "buzzOut": "Out: {{teams}}",
+    "buzzed": "buzzed"
   },
   "settings": {
     "title": "Settings",
@@ -494,7 +508,12 @@
     "defaultLocale": "Language for admin and quizmaster",
     "backup": "Full backup",
     "backupHint": "Database, images and team photos in one zip. Safe while a quiz is running.",
-    "backupDownload": "Download backup"
+    "backupDownload": "Download backup",
+    "tvEffects": "TV effects",
+    "calmMode": "Calm mode",
+    "calmModeHint": "No confetti, sparkles or shaking; frames and cracks stay still. Also follows the device's ‘reduce motion’ setting.",
+    "tvSounds": "Sound effects",
+    "tvSoundsHint": "Buzzer, revealing the answer and the winner. Click the TV screen once so the browser allows sound."
   },
   "packages": {
     "upload": "Upload package",

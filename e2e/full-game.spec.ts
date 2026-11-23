@@ -232,7 +232,9 @@ test("full game: TV, host and two teams", async ({ browser }) => {
   await host.getByRole("button", { name: /En de winnaar is/ }).click();
   await expect(tv.getByRole("heading", { name: "En de winnaar is..." })).toBeVisible();
   await host.getByRole("button", { name: /Naar de eindstand/ }).first().click();
-  await expect(tv.getByRole("heading", { name: "Eindstand" })).toBeVisible();
+  // The finale: drum roll, teams from last place up, then the winner.
+  await expect(tv.getByTestId("tv-finale")).toContainText("En de winnaar is");
+  await expect(tv.getByTestId("finale-winner")).toBeVisible({ timeout: 15_000 });
   await expect(tv.getByText("Winnaar!")).toBeVisible();
   await expect(kim.getByText("Klaar! Jullie eindigden als")).toBeVisible();
   await shot(tv, "12-tv-final");
@@ -242,7 +244,7 @@ test("full game: TV, host and two teams", async ({ browser }) => {
   await host.getByRole("button", { name: "Quiz beëindigen" }).click();
   await expect(host.getByRole("alertdialog")).toContainText("De quiz beëindigen?");
   await host.getByRole("alertdialog").getByRole("button", { name: "Annuleren" }).click();
-  await expect(tv.getByRole("heading", { name: "Eindstand" })).toBeVisible(); // cancelled: still running
+  await expect(tv.getByTestId("tv-finale")).toBeVisible(); // cancelled: still running
   await host.getByRole("button", { name: "Quiz beëindigen" }).click();
   await host.getByTestId("confirm-ok").click();
   await expect(host.getByText("Er loopt geen quiz")).toBeVisible();

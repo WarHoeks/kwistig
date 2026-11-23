@@ -9,6 +9,8 @@ import { useGameSocket } from "../../lib/socket";
 import { formatScore, useQuizText } from "../../lib/text";
 import { TeamDecision, TeamVote } from "./Voting";
 import { PressButton } from "./PressButton";
+import { BuzzButton } from "./BuzzButton";
+import { TeamPhoto } from "../../components/TeamPhoto";
 import { setLanguage } from "../../i18n";
 
 export function PlayScreen() {
@@ -151,6 +153,28 @@ function PlayBody({
 
   if (view.step === "revealed") return <Result view={view} />;
 
+  if (item.answerType === "buzzer") {
+    return (
+      <div className="flex flex-1 flex-col gap-4">
+        <p className="text-center text-lg font-semibold">{text(item.prompt)}</p>
+        <BuzzButton
+          view={view}
+          onBuzz={async () => {
+            setError(null);
+            const ack = await send({ type: "buzz" });
+            // Another team was a fraction quicker: the status line already says so.
+            if (!ack.ok && ack.error !== "buzzer_taken") setError(t(`game.errors.${ack.error}`, { defaultValue: t("errors.generic") }));
+          }}
+        />
+        {error && (
+          <p role="alert" className="rounded-xl bg-red-500/15 px-4 py-3 text-center text-red-200">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   if (item.answerType === "rapid_sequence") {
     return (
       <div className="flex flex-1 flex-col gap-4">
@@ -226,7 +250,14 @@ function Result({ view }: { view: TeamView }) {
           </div>
         )
       )}
-      <TeamAvatar team={view.team} size={120} rounded="rounded-3xl" />
+      {/* The team's photo with its standing: gold frame when leading, cracks when last. */}
+      <TeamPhoto
+        team={view.team}
+        standing={view.standings?.teams.find((s) => s.teamId === view.team.id)}
+        seq={view.standings?.seq ?? 0}
+        size={120}
+        rounded="rounded-3xl"
+      />
       <div className="grid w-full grid-cols-2 gap-3 text-center">
         <div className="card p-4">
           <p className="text-sm text-ink-400">{t("play.score")}</p>

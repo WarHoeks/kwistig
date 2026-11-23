@@ -3,6 +3,7 @@ import type { AnswerValue, MediaPlayback, PublicItem, PublicMedia, TvView } from
 import { CountdownBar, CountdownNumber } from "../../components/Countdown";
 import { Markdown } from "../../components/Markdown";
 import { TvMediaPanel, useRevealProgress } from "../../components/media/TvMedia";
+import { TeamPhoto } from "../../components/TeamPhoto";
 import { YouTubePlayer } from "../../components/media/YouTubePlayer";
 import { TeamAvatar } from "../../components/TeamAvatar";
 import { formatScore, OPTION_COLORS, OPTION_LETTERS, useQuizText } from "../../lib/text";
@@ -135,6 +136,13 @@ export function QuestionView({ view, clockOffset, sendTv }: { view: TvView; cloc
           {view.step === "answering" ? t("tv.answerOnPhone") : view.step === "locked" ? t("tv.locked") : ""}
         </p>
       )}
+      {q.answerType === "buzzer" && !reveal && <BuzzerPanel view={view} />}
+      {q.answerType === "buzzer" && reveal?.answerText && (
+        <div className="inline-block animate-[pop_400ms_ease-out] rounded-[40px] bg-emerald-500 px-16 py-10 text-ink-950">
+          <p className="text-[36px] font-semibold uppercase tracking-[0.15em]">{t("tv.answer")}</p>
+          <p className="font-display text-[110px] leading-none">{text(reveal.answerText)}</p>
+        </div>
+      )}
       {reveal?.explanation && <p className="mt-10 max-w-[1600px] text-[44px] leading-snug text-ink-200">{text(reveal.explanation)}</p>}
     </>
   );
@@ -225,17 +233,53 @@ function Options({ options, correct, compact = false }: { options: string[]; cor
   );
 }
 
+/** Buzzer: open for everyone, or one team's turn (large, with its photo). */
+function BuzzerPanel({ view }: { view: TvView }) {
+  const { t } = useTranslation();
+  const b = view.buzz;
+  const team = b?.current ? view.teams.find((tm) => tm.id === b.current) : undefined;
+  if (team) {
+    return (
+      <div className="flex animate-[pop_350ms_ease-out] items-center gap-10 rounded-[40px] px-12 py-8" style={{ background: team.color }} data-testid="tv-buzzed">
+        <TeamAvatar team={team} size={200} rounded="rounded-[32px]" />
+        <div>
+          <p className="text-[40px] font-semibold uppercase tracking-[0.15em] text-ink-950/80">{t("tv.buzzedFirst")}</p>
+          <p className="font-display text-[100px] leading-none text-ink-950">{team.name}</p>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <p className="text-[64px] font-bold text-gold-300">
+      {view.step === "answering" ? `🔔 ${t("tv.buzzNow")}` : view.step === "locked" ? t("tv.locked") : ""}
+    </p>
+  );
+}
+
 /** Team chips: light up when a team has answered; show right/wrong and points at reveal. */
 function TeamRow({ view }: { view: TvView }) {
   const { i18n } = useTranslation();
   const answered = new Set(view.answered);
   const results = new Map(view.reveal?.results.map((r) => [r.teamId, r]));
+  const lockedOut = new Set(view.buzz?.lockedOut ?? []);
+  // Standings effects only after a reveal, never while a question is running.
+  const standings = view.step === "revealed" ? new Map(view.standings?.teams.map((s) => [s.teamId, s])) : null;
   return (
     <ul className="flex flex-wrap gap-4">
       {view.teams.map((team) => {
         const r = results.get(team.id);
         const has = answered.has(team.id);
-        const state = r ? (r.verdict === "correct" ? "right" : r.verdict === "half" ? "half" : "wrong") : has ? "in" : "out";
+        const state = r
+          ? r.verdict === "correct"
+            ? "right"
+            : r.verdict === "half"
+              ? "half"
+              : "wrong"
+          : lockedOut.has(team.id)
+            ? "wrong"
+            : has
+              ? "in"
+              : "out";
         return (
           <li
             key={team.id}
@@ -247,7 +291,11 @@ function TeamRow({ view }: { view: TvView }) {
             data-testid={`tv-team-${team.id}`}
             data-state={state}
           >
-            <TeamAvatar team={team} size={64} rounded="rounded-full" />
+            {standings ? (
+              <TeamPhoto team={team} standing={standings.get(team.id)} seq={view.standings?.seq ?? 0} size={64} rounded="rounded-full" />
+            ) : (
+              <TeamAvatar team={team} size={64} rounded="rounded-full" />
+            )}
             <span className="max-w-[320px] truncate">{team.name}</span>
             {r && r.points > 0 && <span>+{formatScore(r.points, i18n.language)}</span>}
             {state === "in" && <span aria-hidden>✓</span>}

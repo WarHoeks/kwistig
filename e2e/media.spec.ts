@@ -87,6 +87,26 @@ test("media package, image reveal and flitsreeks", async ({ browser }) => {
   await tv.waitForTimeout(400);
   await tv.screenshot({ path: path.join(shots, "30-tv-image-question.png") });
 
+  // ---------------------------------------------------------------- buzzer (run order is still open)
+  await host.getByRole("button", { name: /Noem de langste rivier/ }).click();
+  await host.getByRole("button", { name: /Open de vraag/ }).click();
+  await expect(a.getByTestId("buzz-button")).toBeEnabled();
+  await a.getByTestId("buzz-button").click();
+  await expect(tv.getByTestId("tv-buzzed")).toContainText("Pixels");
+  await expect(b.getByTestId("buzz-status")).toHaveText("Pixels drukte als eerste.");
+  await expect(b.getByTestId("buzz-button")).toBeDisabled();
+  await tv.screenshot({ path: path.join(shots, "35-tv-buzzed.png") });
+  await host.getByTestId("host-buzzer").getByRole("button", { name: /Fout/ }).click();
+  // Wrong: Pixels is out, the buzzer reopens for Sprinters.
+  await expect(a.getByTestId("buzz-status")).toHaveText("Jullie zijn af voor deze vraag.");
+  await b.getByTestId("buzz-button").click();
+  await expect(b.getByTestId("buzz-status")).toHaveText("Jullie zijn aan de beurt! Zeg het antwoord hardop.");
+  await host.getByTestId("host-buzzer").getByRole("button", { name: /Goed/ }).click();
+  await expect(tv.getByText("De Wolga")).toBeVisible();
+  await expect(b.getByTestId("play-result")).toHaveAttribute("data-verdict", "correct");
+  await tv.waitForTimeout(600);
+  await tv.screenshot({ path: path.join(shots, "36-tv-buzzer-reveal.png") });
+
   // ---------------------------------------------------------------- flitsreeks (run order is still open)
   await host.getByRole("button", { name: /Winnaar of verliezer/ }).click();
   await expect(tv.getByText("WINNAAR!")).toBeVisible();

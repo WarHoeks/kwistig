@@ -18,6 +18,8 @@ export function readSettings(app: FastifyInstance): Settings {
     envBaseUrl: app.config.PUBLIC_BASE_URL ?? null,
     defaultLocale: locale,
     quickMessages: quick ? (JSON.parse(quick) as string[]) : DEFAULT_QUICK_MESSAGES[locale],
+    calmMode: getSetting(app.db, "calm_mode") === "true",
+    tvSounds: getSetting(app.db, "tv_sounds") !== "false",
   };
 }
 
@@ -43,6 +45,8 @@ export async function settingsRoutes(app: FastifyInstance) {
     }
     if (patch.defaultLocale) setSetting(app.db, "default_locale", patch.defaultLocale);
     if (patch.quickMessages) setSetting(app.db, "quick_messages", JSON.stringify(patch.quickMessages));
+    if (patch.calmMode !== undefined) setSetting(app.db, "calm_mode", String(patch.calmMode));
+    if (patch.tvSounds !== undefined) setSetting(app.db, "tv_sounds", String(patch.tvSounds));
     return readSettings(app);
   });
 }

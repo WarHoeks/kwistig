@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useSpotifyTvPlayer } from "../../components/media/SpotifyTvPlayer";
 import { useTranslation } from "react-i18next";
-import { isIdle, type ServerView, type TvJoinInfo, type TvView } from "@kwistig/shared";
+import { isIdle, type ServerView, type Settings, type TvJoinInfo, type TvView } from "@kwistig/shared";
+import { setCalmMode } from "../../lib/effects";
+import { setSoundsEnabled, sounds } from "../../lib/sounds";
 import { PinGate } from "../../components/PinGate";
 import { Stage } from "../../components/Stage";
 import { api } from "../../lib/api";
@@ -22,6 +24,8 @@ function TvLive() {
   const { view, connected, clockOffset, send } = useGameSocket<ServerView<TvView>>({ role: "tv" });
   const sendTv: SendTv = (intent) => void send(intent);
   const live = view && !isIdle(view) ? view : null;
+  useTvSettings();
+  useGameSounds(live);
 
   // Spotify: this page is the "Kwistig TV" player. Its device id is re-sent after
   // every reconnect, since the server only keeps it in memory.
@@ -110,6 +114,38 @@ function TvLive() {
       )}
     </Stage>
   );
+}
+
+/** Calm mode and sound effects from admin settings; re-read every minute. */
+function useTvSettings() {
+  useEffect(() => {
+    const load = () =>
+      api<Settings>("/settings")
+        .then((s) => {
+          setCalmMode(s.calmMode);
+          setSoundsEnabled(s.tvSounds);
+        })
+        .catch(() => undefined);
+    void load();
+    const timer = setInterval(load, 60_000);
+    return () => clearInterval(timer);
+  }, []);
+}
+
+/** Sound effects on game events: a buzz, a wrong buzzer answer, a reveal. */
+function useGameSounds(view: TvView | null) {
+  const prev = useRef<{ key: string; step: string | null; buzz: number | null; out: number } | null>(null);
+  useEffect(() => {
+    if (!view) return;
+    const key = `${view.sessionId}:${view.item?.cursor ?? -1}`;
+    const now = { key, step: view.step, buzz: view.buzz?.current ?? null, out: view.buzz?.lockedOut.length ?? 0 };
+    const p = prev.current;
+    prev.current = now;
+    if (!p || p.key !== key) return; // a new item: nothing to compare with
+    if (now.buzz !== null && now.buzz !== p.buzz) sounds.buzz();
+    if (now.out > p.out) sounds.wrong();
+    if (now.step === "revealed" && p.step !== "revealed") sounds.reveal();
+  }, [view]);
 }
 
 /** A Spotify clip is part of what's on screen now (question, continuation or slide). */

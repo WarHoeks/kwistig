@@ -35,6 +35,10 @@ export const Settings = z.object({
   envBaseUrl: z.string().nullable(),
   defaultLocale: Language,
   quickMessages: z.array(z.string()),
+  /** Turns effects down: no confetti, particles or shaking (also follows prefers-reduced-motion). */
+  calmMode: z.boolean(),
+  /** Sound effects on the TV (buzzer, reveal, winner). */
+  tvSounds: z.boolean(),
 });
 export type Settings = z.infer<typeof Settings>;
 
@@ -46,6 +50,8 @@ export const SettingsPatch = z.strictObject({
     .optional(),
   defaultLocale: Language.optional(),
   quickMessages: z.array(z.string().trim().min(1).max(280)).max(20).optional(),
+  calmMode: z.boolean().optional(),
+  tvSounds: z.boolean().optional(),
 });
 
 export interface SessionSummary {

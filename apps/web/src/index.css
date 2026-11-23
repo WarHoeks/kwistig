@@ -38,6 +38,67 @@
   }
 }
 
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-6%) rotate(-3deg);
+  }
+  40%,
+  80% {
+    transform: translateX(6%) rotate(3deg);
+  }
+}
+
+@keyframes crack-draw {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes crack-heal {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 100;
+  }
+}
+
+@keyframes sparkle {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.4) rotate(90deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0) rotate(180deg) translateY(-30%);
+    opacity: 0;
+  }
+}
+
+@keyframes poof {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+    filter: blur(8px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

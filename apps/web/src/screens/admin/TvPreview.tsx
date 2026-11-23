@@ -56,6 +56,8 @@ export function TvPreview({ item, round, quizTitle, quizLang }: { item: Item; ro
       continuation: null,
       sequence: null,
       spotlight: null,
+      buzz: null,
+      standings: null,
     };
   }, [item, round, quizTitle, quizLang, mode]);
 
