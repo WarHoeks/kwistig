@@ -20,6 +20,8 @@ import { setExternalFetch } from "./services/safe-fetch.js";
 import { SpotifyService, type FetchLike } from "./services/spotify.js";
 import { SpotifyPlayback } from "./services/spotify-playback.js";
 import { spotifyRoutes } from "./routes/spotify.js";
+import { TriviaService, type JsonFetch } from "./services/trivia.js";
+import { triviaRoutes } from "./routes/trivia.js";
 import { sessionRoutes } from "./routes/sessions.js";
 
 declare module "fastify" {
@@ -30,6 +32,7 @@ declare module "fastify" {
     game: GameRunner;
     media: MediaStore;
     spotify: SpotifyService;
+    trivia: TriviaService;
   }
 }
 
@@ -39,6 +42,8 @@ export interface BuildOptions {
   dbFile?: string;
   /** Replaces fetch for Spotify calls (tests use a fake Spotify). */
   spotifyFetch?: FetchLike;
+  /** Replaces the Open Trivia DB fetch (tests). */
+  triviaFetch?: JsonFetch;
 }
 
 export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
@@ -61,6 +66,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   app.decorate("game", runner);
   const spotify = new SpotifyService(db, { clientId: config.SPOTIFY_CLIENT_ID, redirectUri: config.SPOTIFY_REDIRECT_URI }, opts.spotifyFetch);
   app.decorate("spotify", spotify);
+  app.decorate("trivia", new TriviaService(opts.triviaFetch));
   const spotifyPlayback = new SpotifyPlayback(
     spotify,
     (intent) => {
@@ -103,6 +109,7 @@ export async function buildApp(opts: BuildOptions): Promise<FastifyInstance> {
   await app.register(mediaApiRoutes, { prefix: "/api/media" });
   await app.register(spotifyRoutes, { prefix: "/api/spotify" });
   await app.register(sessionRoutes, { prefix: "/api/sessions" });
+  await app.register(triviaRoutes, { prefix: "/api/trivia" });
   await app.register(mediaFileRoutes);
 
   attachHub(app, runner);

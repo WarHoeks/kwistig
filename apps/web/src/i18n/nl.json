@@ -629,5 +629,30 @@
     "blank": "weggelaten",
     "image": "Afbeelding",
     "closest": "dichtstbij wint"
+  },
+  "trivia": {
+    "addRound": "Trivia-ronde toevoegen",
+    "hint": "Vragen uit Open Trivia DB, in het Engels. Ze worden gewone vragen die je daarna kunt vertalen of aanpassen.",
+    "category": "Categorie",
+    "anyCategory": "Alle categorieën",
+    "difficulty": "Moeilijkheid",
+    "anyDifficulty": "Gemengd",
+    "difficulties": {
+      "easy": "Makkelijk",
+      "medium": "Gemiddeld",
+      "hard": "Moeilijk"
+    },
+    "amount": "Aantal vragen",
+    "type": "Soort vragen",
+    "mixed": "Gemengd",
+    "fetch_one": "{{count}} vraag ophalen",
+    "fetch_other": "{{count}} vragen ophalen",
+    "credit": "Bron: opentdb.com (CC BY-SA 4.0).",
+    "errors": {
+      "trivia_not_enough": "Open Trivia DB heeft niet genoeg vragen voor deze keuze. Kies minder vragen of een andere moeilijkheid.",
+      "trivia_rate_limited": "Even wachten: Open Trivia DB staat één verzoek per 5 seconden toe.",
+      "trivia_unavailable": "Open Trivia DB is niet bereikbaar. Heeft de server internet?",
+      "generic": "Er ging iets mis."
+    }
   }
 }

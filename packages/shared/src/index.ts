@@ -10,3 +10,4 @@ export * from "./votes.js";
 export * from "./media.js";
 export * from "./spotify.js";
 export * from "./public.js";
+export * from "./trivia.js";

@@ -629,5 +629,30 @@
     "blank": "blanked",
     "image": "Image",
     "closest": "closest wins"
+  },
+  "trivia": {
+    "addRound": "Add a trivia round",
+    "hint": "Questions from Open Trivia DB, in English. They become normal questions you can translate or edit afterwards.",
+    "category": "Category",
+    "anyCategory": "Any category",
+    "difficulty": "Difficulty",
+    "anyDifficulty": "Mixed",
+    "difficulties": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "amount": "Number of questions",
+    "type": "Question type",
+    "mixed": "Mixed",
+    "fetch_one": "Fetch {{count}} question",
+    "fetch_other": "Fetch {{count}} questions",
+    "credit": "Source: opentdb.com (CC BY-SA 4.0).",
+    "errors": {
+      "trivia_not_enough": "Open Trivia DB doesn't have enough questions for this choice. Pick fewer questions or another difficulty.",
+      "trivia_rate_limited": "Hold on: Open Trivia DB allows one request every 5 seconds.",
+      "trivia_unavailable": "Open Trivia DB can't be reached. Does the server have internet?",
+      "generic": "Something went wrong."
+    }
   }
 }
