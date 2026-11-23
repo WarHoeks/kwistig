@@ -121,3 +121,9 @@ Quizzes import and export as JSON. The JSON Schema is served at `/api/schema/qui
 A **quiz package** (`kwistig-<quiz>.zip`, from the library or the host's quiz picker) holds `manifest.json` with a checksum per file, `quiz.json`, every image in `media/`, and fetched news headlines and YouTube details in `cache/`. Uploading one shows a preview and offers *import as new* or *replace* when the same quiz is already there. Images are stored by content hash, so shared images are kept once. Team photos and scores are never in a package.
 
 `node scripts/make-sample-package.mjs` builds `samples/kitchen-sink.zip` from the sample quiz and its placeholder images (`node scripts/make-sample-images.mjs` regenerates those).
+
+## License
+
+Kwistig is free for personal and other noncommercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE). You may run it, change it and share it for quiz nights at home, at school, in a club or for a charity. Commercial use, such as selling it, running paid quiz events with it or offering it as a service, needs permission: open an issue to ask.
+
+This makes Kwistig source-available rather than open source in the OSI sense. The libraries it uses keep their own (MIT, ISC and Apache-2.0) licenses.
