@@ -52,7 +52,7 @@ A self-hosted living-room pub quiz: Connect your laptop to a screen through HDMI
 
 ## A quiz night
 
-Doing it for the first time? Play the test quiz in `samples/generale-repetitie.zip` with a few friends first, using the checklist in [docs/TEST-NIGHT.md](docs/TEST-NIGHT.md).
+Doing it for the first time? Play the test quiz with a few friends first (build it with `node scripts/make-sample-package.mjs generale-repetitie`, then upload `samples/generale-repetitie.zip` in Admin), using the checklist in [docs/TEST-NIGHT.md](docs/TEST-NIGHT.md).
 
 1. On the laptop, open **`http://localhost:8080/tv`** in Chrome, sign in with the PIN once, and put it on the TV (see [step 4](#4-the-tv-page-and-youtube-sign-in) for why `localhost`).
 2. On your phone, open `http://<laptop-ip>:8080/host`, sign in, and start a quiz. The TV shows a QR code.

@@ -14,7 +14,7 @@ Tick things off as you go and write down anything odd: what you did, on which de
 
 ## Before the guests arrive
 
-- [ ] In **Admin**, the quiz *Generale repetitie* is in the list. If not, upload `samples/generale-repetitie.zip` with **Pakket uploaden**.
+- [ ] In **Admin**, the quiz *Generale repetitie* is in the list. If not, build the package with `node scripts/make-sample-package.mjs generale-repetitie` and upload `samples/generale-repetitie.zip` with **Pakket uploaden**.
 - [ ] Open the quiz and click **🖨 Afdrukken**. Every question shows its answer; the Spotify and YouTube questions show their clip times. Untick *Met antwoorden*: the answers disappear.
 - [ ] In the editor, click **+ Trivia-ronde toevoegen**, pick a category and fetch 5 questions. A fourth round appears with English questions. Keep it if you like, then **Opslaan**.
 - [ ] Click a question in the editor: the preview at the top shows how it looks on the TV.
