@@ -26,7 +26,7 @@ function TvLive() {
   const live = view && !isIdle(view) ? view : null;
   const music = useTvSettings();
   useGameSounds(live);
-  useThinkingMusic(live, music);
+  useThinkingMusic(live, music, clockOffset);
   const activated = useUserActivation();
 
   // Spotify: this page is the "Kwistig TV" player. Its device id is re-sent after
@@ -167,7 +167,7 @@ function useTvSettings(): boolean {
  * A quiet looping tune while teams answer a question without its own clip. It
  * stops when answers close, when a team buzzes, and for YouTube/Spotify questions.
  */
-function useThinkingMusic(view: TvView | null, enabled: boolean) {
+function useThinkingMusic(view: TvView | null, enabled: boolean, clockOffset: number) {
   const item = view?.item;
   const on =
     enabled &&
@@ -181,12 +181,29 @@ function useThinkingMusic(view: TvView | null, enabled: boolean) {
     !view.overlay.scoreboard &&
     !view.overlay.message;
   const key = on ? `${view.sessionId}:${item.cursor}` : null;
+  const endsAt = on ? (view.timer?.endsAt ?? null) : null;
+  const offset = useRef(clockOffset);
+  offset.current = clockOffset;
   useEffect(() => {
     if (!key) return;
-    const stop = startThinkingMusic();
-    return stop;
-  }, [key]);
+    const music = startThinkingMusic();
+    // In the last five seconds the tune speeds up, slowly at first: up to 1.6× at zero.
+    const timer =
+      endsAt === null
+        ? undefined
+        : window.setInterval(() => {
+            const left = endsAt - (Date.now() + offset.current);
+            const p = Math.min(1, Math.max(0, 1 - left / FINAL_MS));
+            music.setTempo(1 + 0.6 * p * p);
+          }, 100);
+    return () => {
+      clearInterval(timer);
+      music.stop();
+    };
+  }, [key, endsAt]);
 }
+
+const FINAL_MS = 5000;
 
 /** Sound effects on game events: a buzz, a wrong buzzer answer, a reveal. */
 function useGameSounds(view: TvView | null) {

@@ -86,21 +86,22 @@ export function unlockAudio() {
 
 // ---------------------------------------------------------------- thinking music
 
-const BPM = 104;
-const EIGHTH = 60 / BPM / 2;
-// Eight bars, one chord each (MIDI note numbers of the chord's root, third, fifth).
+const BPM = 112;
+const BASE_EIGHTH = 60 / BPM / 2;
+// Eight bars in A minor, one chord each (MIDI notes: root, third, fifth). The E
+// major chords (with G#) pull back to Am, which keeps the tension up.
 const CHORDS: [number, number, number][] = [
-  [60, 64, 67], // C
+  [57, 60, 64], // Am
   [57, 60, 64], // Am
   [53, 57, 60], // F
-  [55, 59, 62], // G
-  [60, 64, 67], // C
-  [57, 60, 64], // Am
+  [52, 56, 59], // E
   [50, 53, 57], // Dm
-  [55, 59, 62], // G
+  [50, 53, 57], // Dm
+  [52, 56, 59], // E
+  [52, 56, 59], // E
 ];
 // Which chord tone each eighth note plays: 0-2 = chord, 3 = root an octave up.
-const ARP = [0, 1, 2, 3, 2, 1, 2, 1];
+const ARP = [0, 2, 1, 2, 3, 2, 1, 2];
 const hz = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
 
 function note(a: AudioContext, out: AudioNode, freq: number, t0: number, dur: number, type: OscillatorType, gain: number) {
@@ -109,51 +110,69 @@ function note(a: AudioContext, out: AudioNode, freq: number, t0: number, dur: nu
   osc.type = type;
   osc.frequency.setValueAtTime(freq, t0);
   g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(gain, t0 + 0.015);
+  g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   osc.connect(g).connect(out);
   osc.start(t0);
   osc.stop(t0 + dur + 0.05);
 }
 
+export interface ThinkingMusic {
+  /** 1 = normal speed; higher plays faster (the last seconds of the timer). */
+  setTempo(factor: number): void;
+  /** Fades out and stops. */
+  stop(): void;
+}
+
 /**
- * Starts a quiet, looping "thinking" tune (C-Am-F-G with a plucked arpeggio, a
- * walking bass and a soft clock tick). Returns a function that fades it out.
+ * Starts a quiet, tense, looping tune: a pulsing low bass on every eighth, a
+ * minor arpeggio and a tick-tock clock. The tempo can change while it plays.
  */
-export function startThinkingMusic(): () => void {
+export function startThinkingMusic(): ThinkingMusic {
   const a = context();
-  if (!a) return () => undefined;
+  if (!a) return { setTempo: () => undefined, stop: () => undefined };
   const master = a.createGain();
   master.gain.setValueAtTime(0.0001, a.currentTime);
-  master.gain.exponentialRampToValueAtTime(1, a.currentTime + 1.2);
+  master.gain.exponentialRampToValueAtTime(1, a.currentTime + 1);
   master.connect(a.destination);
 
+  let tempo = 1;
   let step = 0;
   let next = a.currentTime + 0.1;
   const schedule = () => {
-    // Schedule everything due in the next 300 ms.
-    while (next < a.currentTime + 0.3) {
+    // Schedule everything due in the next 250 ms.
+    while (next < a.currentTime + 0.25) {
+      const eighth = BASE_EIGHTH / tempo;
       const bar = Math.floor(step / 8) % CHORDS.length;
       const beat = step % 8;
       const chord = CHORDS[bar]!;
       const tone = ARP[beat]!;
       const midi = tone === 3 ? chord[0] + 12 : chord[tone]!;
-      note(a, master, hz(midi + 12), next, EIGHTH * 1.6, "triangle", 0.035);
-      if (beat === 0 || beat === 4) note(a, master, hz(chord[0] - 24), next, EIGHTH * 3.5, "sine", 0.09);
-      if (beat === 2 || beat === 6) note(a, master, hz(chord[2] - 24), next, EIGHTH * 1.5, "sine", 0.06);
-      if (beat % 2 === 1) note(a, master, 2800, next, 0.03, "square", 0.006);
-      next += EIGHTH;
+      // Pulsing bass: short low notes on every eighth, accent on the beat.
+      note(a, master, hz(chord[0] - 24), next, eighth * 0.8, "triangle", beat % 2 === 0 ? 0.11 : 0.07);
+      // Arpeggio, a little brighter as the tempo rises.
+      note(a, master, hz(midi + 12), next, eighth * 1.2, "triangle", 0.03 + (tempo - 1) * 0.02);
+      // Clock: tick on the beat, tock in between.
+      if (beat % 2 === 0) note(a, master, beat % 4 === 0 ? 1600 : 1250, next, 0.035, "sine", 0.05);
+      // A high held note on the last bar of every four, to build up.
+      if (beat === 0 && bar % 4 === 3) note(a, master, hz(chord[1] + 24), next, eighth * 7, "sine", 0.015);
+      next += eighth;
       step++;
     }
   };
   schedule();
-  const timer = window.setInterval(schedule, 100);
-  return () => {
-    clearInterval(timer);
-    const now = a.currentTime;
-    master.gain.cancelScheduledValues(now);
-    master.gain.setValueAtTime(Math.max(master.gain.value, 0.0001), now);
-    master.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
-    window.setTimeout(() => master.disconnect(), 1500);
+  const timer = window.setInterval(schedule, 50);
+  return {
+    setTempo(factor) {
+      tempo = Math.min(2, Math.max(0.5, factor));
+    },
+    stop() {
+      clearInterval(timer);
+      const now = a.currentTime;
+      master.gain.cancelScheduledValues(now);
+      master.gain.setValueAtTime(Math.max(master.gain.value, 0.0001), now);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+      window.setTimeout(() => master.disconnect(), 1500);
+    },
   };
 }
