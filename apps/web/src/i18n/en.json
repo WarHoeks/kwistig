@@ -613,5 +613,21 @@
     "blockedIp": "Refused because the page was opened via an IP address. Use http://localhost:8080.",
     "failed": "YouTube returned error {{code}}.",
     "adHint": "Did an ad play first? Then this Chrome isn't signed in with YouTube Premium. Sign in on youtube.com in this Chrome profile and test again."
+  },
+  "print": {
+    "open": "Print",
+    "title": "Answer sheet",
+    "print": "Print",
+    "withAnswers": "With answers",
+    "hostCopy": "Host copy with answers",
+    "questionsOnly": "Questions only",
+    "hostNotes": "Note",
+    "media": "Media",
+    "revealMedia": "With the answer",
+    "playBefore": "before the question",
+    "news": "Headline",
+    "blank": "blanked",
+    "image": "Image",
+    "closest": "closest wins"
   }
 }

@@ -4,6 +4,7 @@ import { QuizLibrary } from "./screens/admin/QuizLibrary";
 import { QuizEditor } from "./screens/admin/QuizEditor";
 import { SettingsPage } from "./screens/admin/SettingsPage";
 import { SessionsPage } from "./screens/admin/SessionsPage";
+import { PrintQuiz } from "./screens/admin/PrintQuiz";
 import { TvScreen } from "./screens/tv/TvScreen";
 import { HostScreen } from "./screens/host/HostScreen";
 import { JoinScreen } from "./screens/play/JoinScreen";
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <QuizLibrary /> },
       { path: "quiz/:id", element: <QuizEditor /> },
+      { path: "quiz/:id/print", element: <PrintQuiz /> },
       { path: "settings", element: <SettingsPage /> },
       { path: "sessions", element: <SessionsPage /> },
     ],

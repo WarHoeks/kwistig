@@ -613,5 +613,21 @@
     "blockedIp": "Geweigerd omdat de pagina via een IP-adres is geopend. Gebruik http://localhost:8080.",
     "failed": "YouTube gaf fout {{code}}.",
     "adHint": "Zag je eerst een advertentie? Dan is deze Chrome niet ingelogd met YouTube Premium. Log in op youtube.com in dit Chrome-profiel en test opnieuw."
+  },
+  "print": {
+    "open": "Afdrukken",
+    "title": "Antwoordenblad",
+    "print": "Afdrukken",
+    "withAnswers": "Met antwoorden",
+    "hostCopy": "Presentatorversie met antwoorden",
+    "questionsOnly": "Alleen de vragen",
+    "hostNotes": "Notitie",
+    "media": "Media",
+    "revealMedia": "Bij antwoord",
+    "playBefore": "vóór de vraag",
+    "news": "Nieuwskop",
+    "blank": "weggelaten",
+    "image": "Afbeelding",
+    "closest": "dichtstbij wint"
   }
 }

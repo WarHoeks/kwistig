@@ -183,6 +183,9 @@ export function QuizEditor() {
         </Link>
         <h1 className="truncate text-xl font-bold">{primaryText(doc.title, lang) || t("editor.untitled")}</h1>
         <div className="ml-auto flex items-center gap-3">
+          <Link to={`/admin/quiz/${id}/print`} className="btn-ghost btn-sm" data-testid="print-link">
+            🖨 {t("print.open")}
+          </Link>
           {dirty && <span className="text-sm text-gold-300">{t("common.unsavedChanges")}</span>}
           {savedAt && !dirty && <span className="text-sm text-emerald-300">{t("common.saved")}</span>}
           <button type="button" className="btn-primary" onClick={() => void save()} disabled={saving || !dirty}>

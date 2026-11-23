@@ -150,3 +150,14 @@
 @utility card {
   @apply rounded-xl border border-ink-700 bg-ink-900;
 }
+
+@media print {
+  html,
+  body,
+  #root {
+    background: #fff !important;
+  }
+  @page {
+    margin: 14mm;
+  }
+}
