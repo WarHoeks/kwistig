@@ -40,6 +40,7 @@ A self-hosted living-room pub quiz: Connect your laptop to a screen through HDMI
 ### Preparing a quiz
 
 - ✏️ **Editor in the browser** with rounds, drag-and-drop ordering and a live preview of how each question looks on the TV.
+- ✨ **Quiz with AI:** Kwistig writes a prompt for Claude, ChatGPT or another chatbot with your topic, rounds and question types; paste the reply back in and it becomes a quiz. See [docs/AI-QUESTIONS.md](docs/AI-QUESTIONS.md).
 - 🧠 **Trivia rounds:** fetch ready-made multiple-choice or true/false questions from [Open Trivia DB](https://opentdb.com) by category and difficulty (in English), then edit them like your own.
 - 🖨️ **Printable answer sheet** with all questions, answers, notes and clip times, or a questions-only copy.
 - 📦 **Quiz packages:** download a quiz with all its images as one zip and import it on another Kwistig.

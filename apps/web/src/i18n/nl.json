@@ -657,5 +657,28 @@
       "trivia_unavailable": "Open Trivia DB is niet bereikbaar. Heeft de server internet?",
       "generic": "Er ging iets mis."
     }
+  },
+  "ai": {
+    "button": "Quiz met AI",
+    "title": "Quiz maken met een AI-chatbot",
+    "intro": "Kwistig maakt een opdracht voor Claude, ChatGPT of een andere chatbot. Die schrijft de vragen in het formaat dat Kwistig begrijpt; jij plakt het antwoord hier terug.",
+    "step1": "Kies wat je wilt en kopieer de opdracht naar een nieuwe chat",
+    "topic": "Onderwerp",
+    "topicPlaceholder": "bijvoorbeeld: jaren 80, voetbal, Nederland",
+    "audience": "Spelers (optioneel)",
+    "audiencePlaceholder": "bijvoorbeeld: familie met tieners",
+    "rounds": "Rondes",
+    "perRound": "Vragen per ronde",
+    "types": "Soorten vragen",
+    "bilingual": "Ook in het Engels (of Nederlands) laten vertalen",
+    "copyPrompt": "Kopieer opdracht",
+    "copied": "Gekopieerd",
+    "step2": "Plak het hele antwoord van de chatbot",
+    "replyPlaceholder": "Plak hier het antwoord, met of zonder tekst eromheen.",
+    "import": "Importeren",
+    "notJson": "In dit antwoord staat geen leesbare JSON.",
+    "fixHint": "Kopieer de herstelopdracht, plak die in dezelfde chat en plak het nieuwe antwoord hierboven.",
+    "copyFix": "Kopieer herstelopdracht",
+    "checkFacts": "Chatbots maken fouten. Lees de quiz in de editor na voordat je hem speelt."
   }
 }

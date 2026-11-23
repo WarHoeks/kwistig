@@ -7,6 +7,7 @@ import { intlLocale } from "../../i18n";
 import { IssueList } from "./IssueList";
 import { PackageUpload } from "../../components/PackageUpload";
 import { useConfirm } from "../../components/ConfirmDialog";
+import { AiQuizButton } from "./AiQuizDialog";
 
 export function QuizLibrary() {
   const { t, i18n } = useTranslation();
@@ -74,7 +75,8 @@ export function QuizLibrary() {
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-6">
       <div className="flex flex-wrap items-end gap-4">
         <h1 className="text-2xl font-bold">{t("admin.library")}</h1>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex flex-wrap gap-2">
+          <AiQuizButton />
           <PackageUpload
             onImported={() => {
               setNotice(t("admin.importSuccess"));

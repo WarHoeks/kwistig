@@ -11,3 +11,4 @@ export * from "./media.js";
 export * from "./spotify.js";
 export * from "./public.js";
 export * from "./trivia.js";
+export * from "./ai-prompt.js";
