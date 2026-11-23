@@ -1,10 +1,58 @@
 # Kwistig
 
-*De huiskamerquiz.* A self-hosted living-room pub quiz: the TV shows the questions, teams answer on their phones, and the quizmaster runs it all from their own phone. See [docs/PLAN.md](docs/PLAN.md) for the full design.
+A self-hosted living-room pub quiz: Connect your laptop to a screen through HDMI/DP to show the questions, teams answer on their phones, and the quizmaster runs it all from their own phone. See [docs/PLAN.md](docs/PLAN.md) for the full design.
 
-**Status:** All five phases are done: admin editor, the live game with team voting, images with reveal effects, YouTube clips with continuations, news headlines, flitsreeks, buzzer questions, quiz packages, backups, Spotify (verified with a real Development Mode app), standings effects on the team photos with a finale, sound effects, a printable answer sheet and Open Trivia DB rounds. Ollama-drafted questions are not built.
+## Features
+
+### Question types
+
+- 🔤 **Multiple choice:** two to six options, shown on the TV with a letter and a colour.
+- ✅ **True or false.**
+- ✍️ **Open question:** teams type an answer. Small typos, capitals and accents don't matter, and you can list several accepted answers.
+- 🔢 **Number:** closest team wins, or every answer within a margin you set (for example 1989 ± 1).
+- 🔔 **Buzzer:** the first team to press gets the turn and says the answer out loud. You mark it right or wrong from your phone; a wrong team is out and the buzzer opens again for the others.
+- ⚡ **Flitsreeks:** a series of images flashes by on the TV and teams press a button (with your own label, like *WINNAAR!*) when an image matches. Faster presses can earn a bonus and wrong presses can cost points.
+
+### Media
+
+- 🖼️ **Images** that start blurred, pixelated or zoomed in and become clear while teams think.
+- 🎬 **YouTube clips** from a start to an end second. Show the video or play only the sound, play the clip before the question or together with it, and add a continuation that shows what happened next when you reveal the answer.
+- 🎵 **Spotify fragments** played on the TV without showing the song or artist, with the same timing options as YouTube. You can turn one of your own playlists into a music round in one go.
+- 📰 **News headlines:** paste a news article link and the TV shows its headline with one word blanked out, plus the article's photo.
+- 🪧 **Slides** between questions, with a background colour or image, a break countdown, or the standings.
+
+### Playing
+
+- 📱 **No app to install:** teams scan a QR code on the TV and play in the phone's browser.
+- 👥 **Teams with several phones:** every player votes. The answer with the most votes counts, and a tie is decided by lot. For open and number questions, a player's answer becomes an option the rest of the team can vote for.
+- 📸 **Team photos** taken on the phone at the start, used on the TV all night.
+- 🎮 **The quizmaster's phone is the remote:** open, close and reveal questions, play and replay clips, jump around in the quiz, and see each team's answer and your own notes. Timers start together with the music or video.
+- 🔄 **Nothing gets lost:** every step is saved, so a refreshed phone, a crashed browser or even a restarted server picks up exactly where it was.
+- 🌍 **Dutch and English:** the app is Dutch by default, and every phone can switch language. Questions can have both a Dutch and an English version.
+
+### On the TV
+
+- 🏆 **Standings with drama:** the leader gets a golden frame and a crown, the last team's photo cracks a bit more each round, and a dethroned leader's frame disappears in a puff. Rows slide to their new place when the ranking changes.
+- 🎉 **A proper finale:** a drum roll, the teams from last place up, and then the winner with a fanfare and confetti.
+- 🔊 **Sound effects** for the buzzer, right and wrong answers, and the winner. A calm mode turns off the confetti and shaking, and the TV also follows the device's reduce-motion setting.
+- 📺 Designed for a 1920×1080 screen read from across the room.
+
+### Preparing a quiz
+
+- ✏️ **Editor in the browser** with rounds, drag-and-drop ordering and a live preview of how each question looks on the TV.
+- 🧠 **Trivia rounds:** fetch ready-made multiple-choice or true/false questions from [Open Trivia DB](https://opentdb.com) by category and difficulty (in English), then edit them like your own.
+- 🖨️ **Printable answer sheet** with all questions, answers, notes and clip times, or a questions-only copy.
+- 📦 **Quiz packages:** download a quiz with all its images as one zip and import it on another Kwistig.
+- 💾 **Backups and history:** one-click backup of everything, and the final standings of every past quiz night.
+
+### Running it
+
+- 🐳 **One Docker container** on your own laptop or home server, with everything stored in a `./data` folder. No accounts and no cloud service; teams only need your Wi-Fi.
+- 🔒 **PIN-protected** host and admin pages. Teams never receive the right answer before it is revealed.
 
 ## A quiz night
+
+Doing it for the first time? Play the test quiz in `samples/generale-repetitie.zip` with a few friends first, using the checklist in [docs/TEST-NIGHT.md](docs/TEST-NIGHT.md).
 
 1. On the laptop, open **`http://localhost:8080/tv`** in Chrome, sign in with the PIN once, and put it on the TV (see [step 4](#4-the-tv-page-and-youtube-sign-in) for why `localhost`).
 2. On your phone, open `http://<laptop-ip>:8080/host`, sign in, and start a quiz. The TV shows a QR code.

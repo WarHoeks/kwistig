@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "title": { "nl": "Generale repetitie", "en": "Dress rehearsal" },
+  "language": "nl",
+  "description": "Testquiz voor een proefavond: elk vraagtype, elk mediatype en elk effect één keer. Zie docs/TEST-NIGHT.md.",
+  "rounds": [
+    {
+      "title": { "nl": "Ronde 1: Opwarmen", "en": "Round 1: Warming up" },
+      "defaults": { "points": 1, "timeLimitSec": 30 },
+      "items": [
+        {
+          "kind": "slide",
+          "title": { "nl": "Ronde 1: Opwarmen", "en": "Round 1: Warming up" },
+          "body": { "nl": "Stem op je telefoon. Bij een **gelijke stand** binnen het team beslist het lot.", "en": "Vote on your phone. A **tie** within the team is decided by lot." },
+          "background": { "color": "#1e3a8a" }
+        },
+        {
+          "kind": "question",
+          "answerType": "multiple_choice",
+          "prompt": { "nl": "Wat is de hoofdstad van Australië?", "en": "What is the capital of Australia?" },
+          "options": ["Sydney", "Melbourne", "Canberra", "Perth"],
+          "correct": 2,
+          "explanation": { "nl": "Canberra werd in 1913 gekozen als compromis tussen Sydney en Melbourne.", "en": "Canberra was chosen in 1913 as a compromise between Sydney and Melbourne." },
+          "hostNotes": "Test: laat twee teamleden verschillend stemmen."
+        },
+        {
+          "kind": "question",
+          "answerType": "true_false",
+          "prompt": { "nl": "Een octopus heeft drie harten.", "en": "An octopus has three hearts." },
+          "correct": true,
+          "points": 2
+        },
+        {
+          "kind": "question",
+          "answerType": "open",
+          "prompt": "Welke schilder zie je hier?",
+          "acceptedAnswers": ["Vincent van Gogh", "Van Gogh"],
+          "media": { "type": "image", "src": "media/zelfportret.png", "reveal": "blur" },
+          "hostNotes": "Spelfouten zoals 'van gog' tellen ook goed."
+        },
+        {
+          "kind": "question",
+          "answerType": "number",
+          "prompt": "Hoeveel treden heeft deze trap?",
+          "correct": 128,
+          "unit": "treden",
+          "scoring": { "mode": "closest" },
+          "media": { "type": "image", "src": "media/trap.png", "reveal": "zoom" }
+        },
+        {
+          "kind": "question",
+          "answerType": "number",
+          "prompt": { "nl": "In welk jaar viel de Berlijnse Muur?", "en": "In which year did the Berlin Wall fall?" },
+          "correct": 1989,
+          "scoring": { "mode": "tolerance", "tolerance": 1 },
+          "timeLimitSec": 20
+        },
+        {
+          "kind": "slide",
+          "title": "Tussenstand",
+          "show": "scoreboard"
+        }
+      ]
+    },
+    {
+      "title": { "nl": "Ronde 2: Kijken en luisteren", "en": "Round 2: Watch and listen" },
+      "defaults": { "points": 1, "timeLimitSec": 30 },
+      "items": [
+        {
+          "kind": "slide",
+          "title": { "nl": "Ronde 2: Kijken en luisteren", "en": "Round 2: Watch and listen" },
+          "body": "Geluid aan!",
+          "background": { "image": "media/podium.png" }
+        },
+        {
+          "kind": "question",
+          "answerType": "multiple_choice",
+          "prompt": { "nl": "Wat doet hij in deze clip?", "en": "What does he do in this clip?" },
+          "options": ["Hij valt", "Hij springt", "Hij danst", "Hij rent weg"],
+          "correct": 2,
+          "media": { "type": "youtube", "videoId": "dQw4w9WgXcQ", "startSec": 43, "endSec": 53, "play": "before" },
+          "hostNotes": "Clip eerst (43–53 s); de vraag en de timer openen als de clip klaar is."
+        },
+        {
+          "kind": "question",
+          "answerType": "open",
+          "prompt": { "nl": "Wie zingt dit?", "en": "Who sings this?" },
+          "acceptedAnswers": ["Rick Astley"],
+          "media": { "type": "youtube", "videoId": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "startSec": 18, "endSec": 33, "hideVideo": true },
+          "revealMedia": { "type": "youtube", "videoId": "dQw4w9WgXcQ", "startSec": 33, "endSec": 45, "play": "with" },
+          "hostNotes": "Alleen geluid; timer loopt mee. Bij het antwoord: het vervolg met beeld."
+        },
+        {
+          "kind": "question",
+          "answerType": "open",
+          "prompt": { "nl": "Wie is de artiest?", "en": "Who is the artist?" },
+          "acceptedAnswers": ["Carly Rae Jepsen"],
+          "media": { "type": "spotify", "uri": "spotify:track:11dFghVXANMlKmJXsNCbNl", "startSec": 42, "endSec": 62 },
+          "revealMedia": { "type": "spotify", "uri": "spotify:track:11dFghVXANMlKmJXsNCbNl", "startSec": 62, "endSec": 72, "play": "before" },
+          "points": 2,
+          "hostNotes": "Spotify met de vraag; het vervolg (62–72 s) speelt na het sluiten, vóór het antwoord."
+        },
+        {
+          "kind": "question",
+          "answerType": "multiple_choice",
+          "prompt": "Welk woord ontbreekt in deze kop?",
+          "options": ["Intel", "Nvidia", "Apple", "AMD"],
+          "correct": 1,
+          "media": { "type": "news", "url": "https://nos.nl/artikel/2640716-chipbedrijf-nvidia-haalt-na-affaires-afgetreden-jensen-huang-terug-als-topman", "blankWord": "Nvidia" }
+        },
+        {
+          "kind": "question",
+          "answerType": "open",
+          "prompt": "Wat staat er op deze foto?",
+          "acceptedAnswers": ["Podium", "Een podium", "Podia"],
+          "media": { "type": "image", "src": "media/podium.png", "reveal": "pixelate" }
+        },
+        {
+          "kind": "slide",
+          "title": "Pauze",
+          "body": "Even bijtanken. Probeer nu een telefoon te verversen of de container te herstarten.",
+          "countdownSec": 120
+        },
+        {
+          "kind": "slide",
+          "title": "Tussenstand",
+          "show": "scoreboard"
+        }
+      ]
+    },
+    {
+      "title": { "nl": "Ronde 3: Snel en spannend", "en": "Round 3: Fast and furious" },
+      "items": [
+        {
+          "kind": "slide",
+          "title": { "nl": "Ronde 3: Snel en spannend", "en": "Round 3: Fast and furious" },
+          "body": "Vingers op de knoppen.",
+          "background": { "color": "#7c2d12" }
+        },
+        {
+          "kind": "question",
+          "answerType": "buzzer",
+          "prompt": { "nl": "Noem de langste rivier van Europa.", "en": "Name the longest river in Europe." },
+          "answer": { "nl": "De Wolga", "en": "The Volga" },
+          "points": 3,
+          "hostNotes": "Keur het eerste team eerst af (Fout) om het heropenen te testen."
+        },
+        {
+          "kind": "question",
+          "answerType": "buzzer",
+          "prompt": "Hoeveel spelers staan er per team op een voetbalveld?",
+          "answer": "Elf",
+          "points": 2
+        },
+        {
+          "kind": "question",
+          "answerType": "rapid_sequence",
+          "prompt": { "nl": "Winnaar of verliezer? Druk op WINNAAR bij een winnaar.", "en": "Winner or loser? Press WINNER for a winner." },
+          "buttonLabel": { "nl": "WINNAAR!", "en": "WINNER!" },
+          "secondsPerImage": 3,
+          "graceMs": 300,
+          "scoring": { "pointsPerImage": 1, "speedBonus": true, "wrongPressPenalty": 0.5 },
+          "images": [
+            { "src": "media/persoon1.png", "yes": true, "caption": "Won het EK" },
+            { "src": "media/persoon2.png", "yes": false, "caption": "Degradeerde" },
+            { "src": "media/persoon3.png", "yes": true, "caption": "Gouden medaille" },
+            { "src": "media/persoon4.png", "yes": false, "caption": "Laatste in de finale" },
+            { "src": "media/persoon5.png", "yes": true, "caption": { "nl": "Wereldkampioen", "en": "World champion" } }
+          ]
+        },
+        {
+          "kind": "slide",
+          "title": "En de winnaar is...",
+          "show": "scoreboard"
+        }
+      ]
+    }
+  ]
+}
