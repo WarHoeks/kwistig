@@ -75,6 +75,21 @@ export interface ItemRun {
   presses?: Record<string, Record<string, { playerId: number; at: number }>>;
   /** Flitsreeks reveal: image the host spotlights on the TV. */
   spotlight?: number | null;
+  /** Buzzer: who pressed first and who's out. */
+  buzz?: BuzzState;
+}
+
+/**
+ * A buzzer round: the first press (by server receive time) gets the turn; a wrong
+ * answer locks that team out and reopens the buzzer for the others.
+ */
+export interface BuzzState {
+  /** The team whose turn it is, or null while the buzzer is open. */
+  current: number | null;
+  /** Server time of the current team's press. */
+  at: number | null;
+  /** Teams that answered wrong and can't buzz again. */
+  lockedOut: number[];
 }
 
 /**
@@ -124,6 +139,8 @@ export interface GameState {
   media?: MediaPlayback;
   /** Cached news headlines and images by URL; absent in older snapshots. */
   news?: Record<string, NewsInfo>;
+  /** Standings after the last reveal; absent until the first one. */
+  standings?: StandingsView;
 }
 
 // ---------------------------------------------------------------- views
@@ -197,6 +214,8 @@ export interface RevealInfo {
   explanation?: LocalizedText;
   /** Media played at reveal, if any. */
   revealMedia?: PublicMedia;
+  /** Buzzer: the answer text. */
+  answerText?: LocalizedText;
   /** For a news question: the full headline. */
   headline?: string;
   /** Flitsreeks: every image with its answer and how many teams pressed. */
@@ -231,6 +250,33 @@ export interface CommonView {
   sequence: SequenceState | null;
   /** Flitsreeks reveal: image the host is spotlighting, if any. */
   spotlight: number | null;
+  /** Buzzer question: who has the turn and who's out. */
+  buzz: BuzzState | null;
+  /** Standings after the last reveal (frames, cracks, effects). */
+  standings: StandingsView | null;
+}
+
+/** One team's place in the standings, and what changed at the last reveal. */
+export interface TeamStanding {
+  teamId: number;
+  /** Rank 1 (ties share it), with points. */
+  leader: boolean;
+  /** Lowest score with 3 or more teams. */
+  last: boolean;
+  /** 0–3: deepens the longer a team stays last. */
+  crack: number;
+  /** Most points in the round that just ended. */
+  roundWinner: boolean;
+  /** What happened at the last reveal; the TV plays effects only for these. */
+  event: "gainedLead" | "dethroned" | "enteredLast" | "comeback" | null;
+}
+
+/** Recomputed at every reveal; `seq` lets screens play each change's effect once. */
+export interface StandingsView {
+  seq: number;
+  teams: TeamStanding[];
+  /** Set when the reveal ended a round. */
+  roundIndex: number | null;
 }
 
 /** Server-timed flitsreeks: image i is on screen from startAt + i·ms to startAt + (i+1)·ms. */

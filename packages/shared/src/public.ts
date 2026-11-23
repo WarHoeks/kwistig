@@ -100,7 +100,8 @@ export function correctValue(run: RunItem): AnswerValue | null {
       // One character per image: "1" = yes (press), "0" = no.
       return item.images.map((img) => (img.yes ? "1" : "0")).join("");
     case "buzzer":
-      return null;
+      // The answer as text in the quiz language (the TV shows answerText per language).
+      return typeof item.answer === "string" ? item.answer : (item.answer.nl ?? item.answer.en ?? "");
   }
 }
 
@@ -114,6 +115,7 @@ export function previewReveal(ri: RunItem): RevealInfo | null {
     correct,
     ...(item.answerType === "open" ? { acceptedAnswers: item.acceptedAnswers } : {}),
     ...(item.explanation !== undefined ? { explanation: item.explanation } : {}),
+    ...(item.answerType === "buzzer" ? { answerText: item.answer } : {}),
     ...(rm ? { revealMedia: publicMedia(rm, {}) } : {}),
     ...(item.answerType === "rapid_sequence"
       ? {

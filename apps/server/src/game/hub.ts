@@ -172,6 +172,9 @@ export function attachHub(app: FastifyInstance, runner: GameRunner) {
         case "press":
           runner.dispatch({ type: "press", ...who });
           return;
+        case "buzz":
+          runner.dispatch({ type: "buzz", ...who });
+          return;
       }
     }
     if (data.role === "tv") {

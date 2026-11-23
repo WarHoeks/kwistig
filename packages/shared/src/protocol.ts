@@ -43,6 +43,8 @@ export const HostIntent = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("mediaPause") }),
   z.strictObject({ type: z.literal("mediaReplay") }),
   z.strictObject({ type: z.literal("mediaMute"), on: z.boolean() }),
+  // Buzzer: the team with the turn was right (reveal) or wrong (locked out, buzzer reopens).
+  z.strictObject({ type: z.literal("buzzVerdict"), verdict: z.enum(["correct", "wrong"]) }),
   // Flitsreeks reveal: show one image large on the TV, or the whole grid (null).
   z.strictObject({ type: z.literal("spotlight"), index: z.number().int().min(0).max(19).nullable() }),
 ]);
@@ -74,6 +76,8 @@ export const TeamIntent = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("retractVote") }),
   /** Flitsreeks button. The server decides which image it counts for. */
   z.strictObject({ type: z.literal("press") }),
+  /** Buzzer. The first press from any team, by server receive time, gets the turn. */
+  z.strictObject({ type: z.literal("buzz") }),
 ]);
 export type TeamIntent = z.infer<typeof TeamIntent>;
 
@@ -98,6 +102,9 @@ export const GAME_ERRORS = [
   "no_media",
   "not_running",
   "already_pressed",
+  "not_your_turn",
+  "buzzer_taken",
+  "locked_out",
 ] as const;
 export type GameErrorCode = (typeof GAME_ERRORS)[number];
 

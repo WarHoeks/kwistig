@@ -14,7 +14,7 @@ import {
   type TeamRec,
   type TvIntent,
 } from "@kwistig/shared";
-import { judge, resolveVotes } from "./scoring.js";
+import { computeScores, judge, resolveVotes } from "./scoring.js";
 
 /**
  * The game state machine: a pure reducer. No I/O, no clocks other than ctx.now,
@@ -35,6 +35,7 @@ export type MachineIntent =
   | { type: "vote"; teamId: number; playerId: number; value: AnswerValue }
   | { type: "retractVote"; teamId: number; playerId: number }
   | { type: "press"; teamId: number; playerId: number }
+  | { type: "buzz"; teamId: number; playerId: number }
   | TvIntent
   | { type: "addTeam"; team: TeamRec }
   | { type: "addPlayer"; player: PlayerRec }
@@ -106,6 +107,11 @@ function lockRun(s: GameState, run: ItemRun, ri: RunItem, ctx: Ctx) {
     run.answers = judgeSequence(s, run, ri.item);
     return;
   }
+  if (ri.item.kind === "question" && ri.item.answerType === "buzzer") {
+    // Buzzer answers are decided by the host one by one; closing just stops the buzzer.
+    if (run.buzz) run.buzz.current = null;
+    return;
+  }
   run.votes ??= {};
   run.answers = judge(ri, resolveVotes(ri, run, ctx.random));
   // A continuation clip "before the answer" (e.g. what happens next) is ready to play once answers are in.
@@ -113,6 +119,57 @@ function lockRun(s: GameState, run: ItemRun, ri: RunItem, ctx: Ctx) {
   if (s.phase === "item" && s.cursor === ri.cursor && rm?.play === "before" && isPlayableMedia(rm)) {
     setPlayback(s, ri.cursor, "reveal", rm);
   }
+}
+
+/**
+ * Compares the standings after a reveal with the previous ones. Each team gets
+ * its state (leader, last place with a crack level) and what just changed, so the
+ * TV plays an effect only on a change, not after every question.
+ */
+export function updateStandings(s: GameState, ri: RunItem, ctx: Ctx) {
+  const scores = computeScores(s);
+  const prev = new Map((s.standings?.teams ?? []).map((t) => [t.teamId, t]));
+  const values = s.teams.map((t) => scores.get(t.id) ?? 0);
+  const max = Math.max(...values, 0);
+  const min = Math.min(...values);
+  const lastPlace = s.teams.length >= 3 && min < max;
+
+  // Did this reveal end a round? Then the round's best scorers win it.
+  const laterInRound = ctx.run.some((r) => r.cursor > ri.cursor && r.roundIndex === ri.roundIndex && r.item.kind === "question");
+  const roundWinners = new Set<number>();
+  if (!laterInRound) {
+    const roundPoints = new Map<number, number>();
+    for (const r of ctx.run) {
+      const ir = s.items[r.cursor];
+      if (r.roundIndex !== ri.roundIndex || ir?.step !== "revealed") continue;
+      for (const [teamId, a] of Object.entries(ir.answers)) roundPoints.set(Number(teamId), (roundPoints.get(Number(teamId)) ?? 0) + a.points);
+    }
+    const best = Math.max(0, ...roundPoints.values());
+    if (best > 0) for (const [teamId, p] of roundPoints) if (p === best) roundWinners.add(teamId);
+  }
+
+  s.standings = {
+    seq: (s.standings?.seq ?? 0) + 1,
+    roundIndex: laterInRound ? null : ri.roundIndex,
+    teams: s.teams.map((t) => {
+      const score = scores.get(t.id) ?? 0;
+      const before = prev.get(t.id);
+      const leader = max > 0 && score === max;
+      const last = lastPlace && score === min;
+      const crack = last ? Math.min(3, before?.last ? before.crack + 1 : 1) : 0;
+      const event =
+        leader && !before?.leader
+          ? ("gainedLead" as const)
+          : !leader && before?.leader
+            ? ("dethroned" as const)
+            : last && !before?.last
+              ? ("enteredLast" as const)
+              : !last && before?.last
+                ? ("comeback" as const)
+                : null;
+      return { teamId: t.id, leader, last, crack, roundWinner: roundWinners.has(t.id), event };
+    }),
+  };
 }
 
 /** Drops a phone's votes (it left the team or the game). */
@@ -336,6 +393,10 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       }
       if (q.answerType === "rapid_sequence") startSequence(run, q, now);
       else if (ri.timeLimitSec) startTimer(run, ri.timeLimitSec, now);
+      if (q.answerType === "buzzer") {
+        // (Re)opening keeps who was already out; nobody has the turn.
+        run.buzz = { current: null, at: null, lockedOut: run.buzz?.lockedOut ?? [] };
+      }
       // A clip that goes with the question starts together with the answers and the timer.
       const m = s.media;
       if (m && m.cursor === s.cursor && m.slot === "question" && m.status === "idle" && q.answerType !== "rapid_sequence" && q.media?.play !== "before") {
@@ -358,6 +419,7 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
       if (run.step === "answering" || run.step === "shown") lockRun(s, run, ri, ctx);
       run.step = "revealed";
       run.spotlight = null;
+      updateStandings(s, ri, ctx);
       // Reveal media (e.g. the full clip) takes over the TV's player, unless it was
       // already loaded at lock ("before the answer") — then it keeps its state.
       const armed = s.media?.cursor === s.cursor && s.media.slot === "reveal";
@@ -424,6 +486,54 @@ function apply(s: GameState, intent: MachineIntent, ctx: Ctx): void {
         m.status = "error";
         m.error = intent.code;
       }
+      return;
+    }
+
+    case "buzz": {
+      team(s, intent.teamId);
+      const { run, q } = requireQuestion(s, ctx);
+      if (q.answerType !== "buzzer") fail("not_a_question");
+      if (run.step === "locked" || run.step === "revealed") fail("locked");
+      if (run.step !== "answering") fail("not_answering");
+      if (run.timer && now > run.timer.endsAt + TIMER_SLACK_MS) fail("locked");
+      const b = (run.buzz ??= { current: null, at: null, lockedOut: [] });
+      if (b.lockedOut.includes(intent.teamId)) fail("locked_out");
+      if (b.current !== null) fail("buzzer_taken");
+      b.current = intent.teamId;
+      b.at = now;
+      // The clock stops while the team answers out loud.
+      run.timer = null;
+      return;
+    }
+
+    case "buzzVerdict": {
+      const { ri, run, q } = requireQuestion(s, ctx);
+      if (q.answerType !== "buzzer") fail("not_a_question");
+      const b = run.buzz;
+      if (!b || b.current === null || run.step !== "answering") fail("not_your_turn");
+      const teamId = b!.current!;
+      const correct = intent.verdict === "correct";
+      run.answers[teamId] = {
+        value: "buzz",
+        playerId: 0,
+        at: b!.at ?? now,
+        verdict: correct ? "correct" : "wrong",
+        points: correct ? ri.points : 0,
+        votes: 0,
+        totalVotes: 0,
+        tieBreak: false,
+        manual: true,
+      };
+      if (correct) {
+        b!.current = null;
+        apply(s, { type: "reveal" }, ctx);
+        return;
+      }
+      // Wrong: this team is out, the buzzer opens again for the others.
+      b!.lockedOut.push(teamId);
+      b!.current = null;
+      b!.at = null;
+      if (s.teams.every((t) => b!.lockedOut.includes(t.id))) lockRun(s, run, ri, ctx);
       return;
     }
 

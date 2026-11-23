@@ -60,6 +60,7 @@ export function revealInfo(s: GameState, ri: RunItem): RevealInfo | null {
     ...(item.answerType === "open" ? { acceptedAnswers: item.acceptedAnswers } : {}),
     ...(item.explanation !== undefined ? { explanation: item.explanation } : {}),
     ...(revealMedia ? { revealMedia: publicMedia(revealMedia, s.news) } : {}),
+    ...(item.answerType === "buzzer" ? { answerText: item.answer } : {}),
     ...(headline ? { headline } : {}),
     ...(item.answerType === "rapid_sequence"
       ? {
@@ -100,6 +101,8 @@ function common(s: GameState, run: readonly RunItem[], now: number): CommonView 
     continuation: ri && ir ? continuation(s, ri, ir) : null,
     sequence: ir?.seq ?? null,
     spotlight: ir?.step === "revealed" ? (ir.spotlight ?? null) : null,
+    buzz: ir?.buzz ?? null,
+    standings: s.standings ?? null,
   };
 }
 
