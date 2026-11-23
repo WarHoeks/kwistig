@@ -2,7 +2,7 @@
 
 *De huiskamerquiz.* A self-hosted living-room pub quiz: the TV shows the questions, teams answer on their phones, and the quizmaster runs it all from their own phone. See [docs/PLAN.md](docs/PLAN.md) for the full design.
 
-**Status:** Phases 1–4 are done: admin editor, the live game with team voting, images with reveal effects, YouTube clips with continuations, news headlines, flitsreeks, quiz packages, backups and Spotify (verified with a real Development Mode app). The buzzer, standings effects and the print view arrive in Phase 5; until then buzzer questions show their text only.
+**Status:** All five phases are done: admin editor, the live game with team voting, images with reveal effects, YouTube clips with continuations, news headlines, flitsreeks, buzzer questions, quiz packages, backups, Spotify (verified with a real Development Mode app), standings effects on the team photos with a finale, sound effects, a printable answer sheet and Open Trivia DB rounds. Ollama-drafted questions are not built.
 
 ## A quiz night
 
@@ -10,7 +10,9 @@
 2. On your phone, open `http://<laptop-ip>:8080/host`, sign in, and start a quiz. The TV shows a QR code.
 3. Teams scan the QR code, create a team or join one, and take a team photo when you start the photo step.
 4. Drive the game from your phone: open, close, reveal, next. A clip that goes with a question starts together with the answers and the timer; a clip set to play first opens the question, with its timer, when it ends. Refreshing any device puts it back where it was, and so does restarting the container.
-5. Afterwards, **Admin → Sessies** keeps every quiz night's final standings; delete a session there to remove its team photos too.
+5. For a paper backup, open the quiz in **Admin** and choose **Afdrukken**: every question with its answer, notes and clip times. Untick *Met antwoorden* for a questions-only copy.
+6. Sound effects and confetti are on by default. Click the TV page once so the browser allows sound; **Admin → Instellingen → Tv-effecten** has a calm mode (no confetti or shaking) and a switch for the sounds.
+7. Afterwards, **Admin → Sessies** keeps every quiz night's final standings; delete a session there to remove its team photos too.
 
 ## Run it
 

@@ -414,46 +414,46 @@ Each phase ends with something playable; phase 2 is the first real quiz night.
 
 ### Phase 1 — Skeleton and data
 
-- [ ] Repo, Docker multi-stage build, Compose file, health endpoint
-- [ ] SQLite with Drizzle migrations, Zod quiz schema, JSON import and export (plain `.json`)
-- [ ] Host PIN login, i18n setup with `nl` and `en` files
-- [ ] Admin: quiz list and a basic editor for rounds, slides and text-only questions
+- [x] Repo, Docker multi-stage build, Compose file, health endpoint
+- [x] SQLite with Drizzle migrations, Zod quiz schema, JSON import and export (plain `.json`)
+- [x] Host PIN login, i18n setup with `nl` and `en` files
+- [x] Admin: quiz list and a basic editor for rounds, slides and text-only questions
 
 **Done when:** a sample quiz JSON imports, shows in the editor, and exports identically.
 
 ### Phase 2 — Live game core
 
-- [ ] Game session with join code, WebSocket hub, server-side state machine
-- [ ] TV: lobby with QR code, team photo grid, question, reveal, slide and scoreboard views
-- [ ] Team phones: join as a new team or an existing one, shared team answer synced across phones, team photo step, multiple choice, true/false, open and number answers, rejoin by token
-- [ ] Host remote: quiz picker, navigation, timer, lock, reveal, mark open answers, score adjust, live messages, team and phone management
+- [x] Game session with join code, WebSocket hub, server-side state machine
+- [x] TV: lobby with QR code, team photo grid, question, reveal, slide and scoreboard views
+- [x] Team phones: join as a new team or an existing one, shared team answer synced across phones, team photo step, multiple choice, true/false, open and number answers, rejoin by token
+- [x] Host remote: quiz picker, navigation, timer, lock, reveal, mark open answers, score adjust, live messages, team and phone management
 
 **Done when:** three phones join over Wi-Fi from the laptop running Docker, take team photos, play a 10-question text quiz, and refreshing any device mid-game recovers its state. Two phones in the same team see each other's answer changes within a second.
 
 ### Phase 3 — Media
 
-- [ ] Image upload with reveal effects
-- [ ] Quiz packages: per-quiz zip download and upload; full backup download
-- [ ] Flitsreeks question type with server-timed presses and reveal grid
-- [ ] YouTube via the IFrame Player API with start/end, audio-only cover, embed check
-- [ ] News article fetch (headline and image cached)
-- [ ] Media controls on the host remote
+- [x] Image upload with reveal effects
+- [x] Quiz packages: per-quiz zip download and upload; full backup download
+- [x] Flitsreeks question type with server-timed presses and reveal grid
+- [x] YouTube via the IFrame Player API with start/end, audio-only cover, embed check
+- [x] News article fetch (headline and image cached)
+- [x] Media controls on the host remote
 
 **Done when:** a YouTube clip plays exactly from `startSec` to `endSec` on the TV and the host can replay it from the phone.
 
 ### Phase 4 — Spotify
 
-- [ ] PKCE connect flow on `127.0.0.1`, token refresh
-- [ ] Web Playback SDK device on the TV, Connect-device fallback
-- [ ] Playlist import into a music round
+- [x] PKCE connect flow on `127.0.0.1`, token refresh
+- [x] Web Playback SDK device on the TV, Connect-device fallback
+- [x] Playlist import into a music round
 
 **Done when:** a Spotify question plays a 20-second fragment on the TV without showing track info, and stops on time.
 
 ### Phase 5 — Polish and extras
 
-- [ ] Buzzer answer type, sounds, standings effects on team photos (confetti, cracks, sparkles, poof), rank animations, final "winnaar" sequence
-- [ ] Open Trivia DB round generator; optional Ollama drafting
-- [ ] Print view of a quiz with answers for the host
+- [x] Buzzer answer type, sounds, standings effects on team photos (confetti, cracks, sparkles, poof), rank animations, final "winnaar" sequence
+- [x] Open Trivia DB round generator (Ollama drafting is left for later; nothing depends on it)
+- [x] Print view of a quiz with answers for the host (`/admin/quiz/:id/print`, with or without answers)
 
 ## Open decisions to settle early
 
