@@ -72,6 +72,10 @@ function RapidFields({ q, quizLang, edit }: { q: Rapid; quizLang: Language; edit
         <input type="checkbox" className="accent-amber-400" checked={scoring.speedBonus ?? false} onChange={(e) => editR((d) => setOpt((d.scoring ??= {}), "speedBonus", e.target.checked || undefined))} />
         {t("editor.speedBonus")}
       </label>
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" className="accent-amber-400" checked={q.showCaptions ?? false} onChange={(e) => editR((d) => setOpt(d, "showCaptions", e.target.checked || undefined))} />
+        {t("editor.showCaptions")}
+      </label>
 
       <fieldset className="space-y-2">
         <legend className="label">{t("editor.sequenceImages", { count: q.images.length })}</legend>

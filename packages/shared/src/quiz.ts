@@ -166,6 +166,8 @@ export const RapidSequence = z.strictObject({
   secondsPerImage: z.number().min(1).max(30).optional(),
   /** Grace window after each image switch. Default 300. */
   graceMs: z.number().int().min(0).max(2000).optional(),
+  /** Show each image's caption under it while the sequence runs. Default false (captions only at reveal). */
+  showCaptions: z.boolean().optional(),
   scoring: z
     .strictObject({
       /** Default 1. */
@@ -181,7 +183,7 @@ export const RapidSequence = z.strictObject({
       z.strictObject({
         src: MediaRef,
         yes: z.boolean(),
-        /** Only shown at reveal. */
+        /** Shown at reveal, and during the sequence when showCaptions is on. */
         caption: LocalizedText.optional(),
       }),
     )

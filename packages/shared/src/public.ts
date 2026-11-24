@@ -77,6 +77,7 @@ export function publicItem(ri: RunItem, qCount: number, news: Record<string, New
       ? {
           sequence: {
             images: item.images.map((img) => mediaUrl(img.src)),
+            ...(item.showCaptions ? { captions: item.images.map((img) => img.caption ?? null) } : {}),
             secondsPerImage: item.secondsPerImage ?? 5,
             buttonLabel: item.buttonLabel,
           },

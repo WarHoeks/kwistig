@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PublicItem, SequenceState, TvView } from "@kwistig/shared";
 import { useNow } from "../../lib/socket";
@@ -38,13 +39,22 @@ export function SequenceView({ view, clockOffset }: { view: TvView; clockOffset:
       );
     }
     if (pos.phase === "running") {
+      const caption = q.sequence?.captions?.[pos.index];
       return (
-        <div className="relative h-full bg-black" data-testid="tv-sequence" data-index={pos.index}>
-          <img src={images[pos.index]} alt="" className="h-full w-full object-contain" />
-          <div className="absolute right-10 top-8 rounded-full bg-black/70 px-8 py-3 font-display text-[64px] tabular-nums">
-            {pos.index + 1} / {seq.count}
+        <div className="flex h-full flex-col px-20 pb-12 pt-12" data-testid="tv-sequence" data-index={pos.index}>
+          <div className="flex items-center justify-between gap-10">
+            <p className="min-w-0 truncate font-display text-[52px] leading-tight">{text(q.prompt)}</p>
+            <p className="shrink-0 rounded-full bg-white/10 px-8 py-2 font-display text-[64px] tabular-nums">
+              {pos.index + 1} / {seq.count}
+            </p>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-6 bg-white/10">
+          <FramedImage key={pos.index} src={images[pos.index]!} />
+          {caption && (
+            <p className="mt-6 truncate text-center font-display text-[72px] leading-tight" data-testid="tv-sequence-caption">
+              {text(caption)}
+            </p>
+          )}
+          <div className="mt-8 h-4 shrink-0 overflow-hidden rounded-full bg-white/10">
             <div className="h-full bg-gold-400" style={{ width: `${pos.frac * 100}%` }} />
           </div>
         </div>
@@ -62,6 +72,25 @@ export function SequenceView({ view, clockOffset }: { view: TvView; clockOffset:
       <h1 className="font-display text-[100px] leading-[1.05]">{text(q.prompt)}</h1>
       <p className="rounded-full bg-gold-400 px-14 py-6 font-display text-[64px] text-ink-950">{text(q.sequence?.buttonLabel)}</p>
       <p className="text-[44px] text-ink-200">{done ? t("tv.sequenceDone") : t("tv.sequenceHint")}</p>
+    </div>
+  );
+}
+
+/**
+ * The image as large as fits, scaled up too, with the rounded corners on the
+ * image itself rather than on a letterboxed box around it.
+ */
+function FramedImage({ src }: { src: string }) {
+  const [ratio, setRatio] = useState<number | null>(null);
+  return (
+    <div className="mt-8 flex min-h-0 flex-1 items-center justify-center [container-type:size]">
+      <img
+        src={src}
+        alt=""
+        onLoad={(e) => e.currentTarget.naturalHeight && setRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
+        style={ratio ? { width: `min(100cqw, ${ratio * 100}cqh)`, aspectRatio: ratio } : undefined}
+        className="max-h-full max-w-full rounded-[32px] object-cover shadow-2xl shadow-black/50"
+      />
     </div>
   );
 }
