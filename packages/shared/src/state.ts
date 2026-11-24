@@ -202,8 +202,8 @@ export type PublicItem =
       points: number;
       timeLimitSec?: number;
       media?: PublicMedia;
-      /** Flitsreeks only: the images in order (no yes/no, no captions). */
-      sequence?: { images: string[]; secondsPerImage: number; buttonLabel: LocalizedText };
+      /** Flitsreeks only: the images in order (no yes/no; captions only when the quiz shows them during play). */
+      sequence?: { images: string[]; captions?: (LocalizedText | null)[]; secondsPerImage: number; buttonLabel: LocalizedText };
     };
 
 /** Sent only once an item is revealed. */

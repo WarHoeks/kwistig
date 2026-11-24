@@ -188,6 +188,7 @@
     "pointsPerImage": "Punten per goede afbeelding",
     "wrongPressPenalty": "Aftrek bij foute druk",
     "speedBonus": "Snelheidsbonus (tot 1 punt in de eerste seconde)",
+    "showCaptions": "Toon de bijschriften bij de afbeeldingen tijdens de ronde (anders alleen bij de onthulling)",
     "sequenceImages": "Afbeeldingen ({{count}}, 5 tot 20)",
     "imageYes": "Ja",
     "imageNo": "Nee",

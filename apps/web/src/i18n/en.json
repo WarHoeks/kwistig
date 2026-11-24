@@ -188,6 +188,7 @@
     "pointsPerImage": "Points per right image",
     "wrongPressPenalty": "Penalty per wrong press",
     "speedBonus": "Speed bonus (up to 1 point in the first second)",
+    "showCaptions": "Show the captions with the images during the round (otherwise only at the reveal)",
     "sequenceImages": "Images ({{count}}, 5 to 20)",
     "imageYes": "Yes",
     "imageNo": "No",
